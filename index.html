@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第四组小游戏连连看</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.2em;
+        }
+
+        .info-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .game-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 3px;
+            background: #2c3e50;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: transparent;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .cell:hover {
+            transform: scale(1.05);
+            border-color: white;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        .cell.selected {
+            border: 4px solid #ffd700;
+            box-shadow: 0 0 20px gold;
+        }
+
+        .cell.hint {
+            border: 4px solid #00ff00;
+            box-shadow: 0 0 20px #00ff00;
+            animation: pulse 1s infinite;
+        }
+
+        .cell.empty {
+            background: #2c3e50 !important;
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            cursor: default;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0); }
+        }
+
+        .game-footer {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .game-board {
+                grid-template-columns: repeat(12, 1fr);
+                gap: 2px;
+                padding: 10px;
+                margin: 0 auto;
+            }
+            
+            h1 {
+                font-size: 2em;
+                margin-bottom: 20px;
+            }
+            
+            .game-container {
+                padding: 20px;
+                margin: 0 auto;
+            }
+            
+            .game-controls {
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                margin-bottom: 25px;
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .game-board {
+                grid-template-columns: repeat(8, 1fr);
+                margin: 0 auto;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .info-item {
+                font-size: 1em;
+            }
+            
+            .info-value {
+                font-size: 1.2em;
+            }
+            
+            .game-controls {
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+                margin: 0;
+                overflow-x: hidden;
+            }
+            
+            .game-container {
+                padding: 15px;
+                border-radius: 15px;
+                margin: 0 auto;
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+            
+            .game-info {
+                padding: 15px;
+                gap: 10px;
+            }
+            
+            .info-item {
+                font-size: 0.9em;
+                gap: 5px;
+            }
+            
+            .info-value {
+                font-size: 1.1em;
+            }
+            
+            .game-controls {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+                margin-bottom: 15px;
+                flex-wrap: wrap;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.9em;
+            }
+            
+            .game-board {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 2px;
+                padding: 8px;
+                width: 100%;
+                margin: 0 auto;
+            }
+            
+            .cell {
+                border-radius: 4px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                min-width: 0;
+            }
+            
+            .cell.selected {
+                border: 2px solid #ffd700;
+            }
+            
+            .cell.hint {
+                border: 2px solid #00ff00;
+            }
+            
+            .game-footer {
+                font-size: 0.8em;
+                margin-top: 15px;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .game-board {
+                grid-template-columns: repeat(4, 1fr);
+                margin: 0 auto;
+            }
+            
+            h1 {
+                font-size: 1.3em;
+            }
+            
+            .info-item {
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 彩色连连看</h1>
+        <div class="game-info">
+            <div class="info-item">
+                <span class="info-label">当前分数</span>
+                <span class="info-value" id="score">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">最高分</span>
+                <span class="info-value" id="highScore">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">第</span>
+                <span class="info-value" id="level">1</span>
+                <span class="info-label">关</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">剩余</span>
+                <span class="info-value" id="remaining">128</span>
+            </div>
+        </div>
+
+        <div class="game-controls">
+            <button class="btn btn-primary" onclick="window.game.newGame()">新游戏</button>
+            <button class="btn btn-secondary" onclick="window.game.showHint()">提示</button>
+            <button class="btn btn-secondary" onclick="window.game.refreshBoard()">刷新重组</button>
+        </div>
+
+        <!-- 这里是游戏网格容器 -->
+        <div class="game-board" id="gameBoard"></div>
+
+        <div class="game-footer">
+            <p>点击两个相同颜色的格子，用直线连接（最多两个拐角）即可消除</p>
+        </div>
+    </div>
+    <script>
+        class LianLianKan {
+            constructor() {
+                // 根据屏幕宽度动态调整网格大小
+                this.updateGridSize();
+                this.colors = [
+                    '#FF0000', '#FF79BC', '#FF44FF', '#9F35FF',
+                    '#E6CAFF', '#4A4AFF', '#66B3FF', '#80FFFF',
+                    '#02F78E', '#FFFF6F', '#FFD306', '#FF8000',
+                    '#AD5A5A', '#5CADAD', '#7373B9', '#B766AD'
+                ];
+                
+                this.grid = [];
+                this.selected = null;
+                this.score = 0;
+                this.highScore = 0;
+                this.level = 1;
+                this.remainingPairs = (this.rows * this.cols) / 2;
+                
+                // 初始化游戏
+                this.loadHighScore();
+                this.createBoard();
+                this.generateGrid();
+                // 初始化时更新所有cell的颜色
+                this.updateDisplay();
+                this.setupEventListeners();
+                
+                // 监听窗口大小变化
+                window.addEventListener('resize', () => {
+                    const oldRows = this.rows;
+                    const oldCols = this.cols;
+                    this.updateGridSize();
+                    if (oldRows !== this.rows || oldCols !== this.cols) {
+                        this.createBoard();
+                        this.generateGrid();
+                        // 重新生成游戏板后更新所有cell的颜色
+                        this.updateDisplay();
+                        this.setupEventListeners();
+                    }
+                });
+            }
+            
+            updateGridSize() {
+                const screenWidth = window.innerWidth;
+                if (screenWidth >= 1024) {
+                    this.rows = 16;
+                    this.cols = 16;
+                } else if (screenWidth >= 768) {
+                    this.rows = 12;
+                    this.cols = 12;
+                } else if (screenWidth >= 480) {
+                    this.rows = 8;
+                    this.cols = 8;
+                } else {
+                    this.rows = 6;
+                    this.cols = 6;
+                }
+                this.remainingPairs = (this.rows * this.cols) / 2;
+            }
+            
+            createBoard() {
+                const board = document.getElementById('gameBoard');
+                if (!board) {
+                    console.error('找不到gameBoard元素！');
+                    return;
+                }
+                board.innerHTML = '';
+                
+                for (let i = 0; i < this.rows; i++) {
+                    for (let j = 0; j < this.cols; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.row = i;
+                        cell.dataset.col = j;
+                        board.appendChild(cell);
+                    }
+                }
+                console.log('游戏网格创建成功！');
+            }
+            
+            generateGrid() {
+                // 创建颜色列表
+                const colorsList = [];
+                for (let i = 0; i < (this.rows * this.cols) / 2; i++) {
+                    const color = this.colors[Math.floor(Math.random() * this.colors.length)];
+                    colorsList.push(color, color);
+                }
+                
+                // 随机打乱
+                for (let i = colorsList.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [colorsList[i], colorsList[j]] = [colorsList[j], colorsList[i]];
+                }
+                
+                // 填充网格
+                this.grid = [];
+                let index = 0;
+                for (let i = 0; i < this.rows; i++) {
+                    const row = [];
+                    for (let j = 0; j < this.cols; j++) {
+                        row.push(colorsList[index++]);
+                    }
+                    this.grid.push(row);
+                }
+                
+                this.remainingPairs = (this.rows * this.cols) / 2;
+                this.selected = null;
+                console.log('网格生成成功！');
+            }
+            
+            updateDisplay() {
+                // 更新所有cell的颜色
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    
+                    if (this.grid && this.grid[row] && this.grid[row][col]) {
+                        cell.style.backgroundColor = this.grid[row][col];
+                        cell.classList.remove('empty');
+                    } else {
+                        cell.style.backgroundColor = '';
+                        cell.classList.add('empty');
+                    }
+                    
+                    cell.classList.remove('selected', 'hint');
+                });
+                
+                // 更新分数显示
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('highScore').textContent = this.highScore;
+                document.getElementById('level').textContent = this.level;
+                document.getElementById('remaining').textContent = this.remainingPairs;
+            }
+            
+            updateCell(row, col) {
+                // 只更新指定的cell，减少DOM操作
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (!cell) return;
+                
+                if (this.grid && this.grid[row] && this.grid[row][col]) {
+                    cell.style.backgroundColor = this.grid[row][col];
+                    cell.classList.remove('empty');
+                } else {
+                    cell.style.backgroundColor = '';
+                    cell.classList.add('empty');
+                }
+                
+                cell.classList.remove('selected', 'hint');
+            }
+            
+            setupEventListeners() {
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    cell.addEventListener('click', (e) => {
+                        const row = parseInt(cell.dataset.row);
+                        const col = parseInt(cell.dataset.col);
+                        this.onClick(row, col);
+                    });
+                });
+            }
+            
+            onClick(row, col) {
+                if (!this.grid[row] || !this.grid[row][col]) return;
+                
+                if (this.selected === null) {
+                    // 第一次选择
+                    this.selected = { row, col };
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cell.classList.add('selected');
+                } else {
+                    // 第二次选择
+                    if (this.selected.row === row && this.selected.col === col) {
+                        // 取消选择
+                        document.querySelector(`[data-row="${row}"][data-col="${col}"]`).classList.remove('selected');
+                        this.selected = null;
+                        return;
+                    }
+                    // 检查是否可以消除
+                    if (this.canRemove(this.selected.row, this.selected.col, row, col)) {
+                        // 消除成功
+                        this.removePair(this.selected.row, this.selected.col, row, col);
+                        this.score++;
+                        this.remainingPairs--;
+                        
+                        // 更新最高分
+                        if (this.score > this.highScore) {
+                            this.highScore = this.score;
+                            this.saveHighScore();
+                        }
+                        
+                        // 检查是否通关
+                        if (this.remainingPairs === 0) {
+                            this.nextLevel();
+                        }
+                    }
+                    
+                    // 清除选择状态
+                    document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('selected'));
+                    this.selected = null;
+                    this.updateDisplay();
+                }
+            }
+            
+            canRemove(x1, y1, x2, y2) {
+                // 检查颜色是否相同
+                if (this.grid[x1][y1] !== this.grid[x2][y2]) return false;
+                
+                // 检查是否是同一个格子
+                if (x1 === x2 && y1 === y2) return false;
+                
+                // 检查四种连接方式
+                return (this.checkDirect(x1, y1, x2, y2) ||
+                        this.checkOneCorner(x1, y1, x2, y2) ||
+                        this.checkTwoCorners(x1, y1, x2, y2));
+            }
+            
+            checkDirect(x1, y1, x2, y2) {
+                if (x1 === x2) {
+                    const step = y2 > y1 ? 1 : -1;
+                    for (let y = y1 + step; y !== y2; y += step) {
+                        if (this.grid[x1][y]) return false;
+                    }
+                    return true;
+                } else if (y1 === y2) {
+                    const step = x2 > x1 ? 1 : -1;
+                    for (let x = x1 + step; x !== x2; x += step) {
+                        if (this.grid[x][y1]) return false;
+                    }
+                    return true;
+                }
+                return false;
+            }
+            
+            checkOneCorner(x1, y1, x2, y2) {
+                if (!this.grid[x1][y2]) {
+                    if (this.checkDirect(x1, y1, x1, y2) && 
+                        this.checkDirect(x2, y2, x1, y2)) {
+                        return true;
+                    }
+                }
+                
+                if (!this.grid[x2][y1]) {
+                    if (this.checkDirect(x1, y1, x2, y1) && 
+                        this.checkDirect(x2, y2, x2, y1)) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+            
+            checkTwoCorners(x1, y1, x2, y2) {
+                // 只检查可能的路径，减少计算量
+                // 检查垂直方向的路径
+                for (let i = Math.min(x1, x2) - 1; i <= Math.max(x1, x2) + 1; i++) {
+                    if (i >= 0 && i < this.rows && i !== x1 && i !== x2) {
+                        if (!this.grid[i][y1] && !this.grid[i][y2] &&
+                            this.checkDirect(x1, y1, i, y1) &&
+                            this.checkDirect(i, y1, i, y2) &&
+                            this.checkDirect(i, y2, x2, y2)) {
+                            return true;
+                        }
+                    }
+                }
+                
+                // 检查水平方向的路径
+                for (let j = Math.min(y1, y2) - 1; j <= Math.max(y1, y2) + 1; j++) {
+                    if (j >= 0 && j < this.cols && j !== y1 && j !== y2) {
+                        if (!this.grid[x1][j] && !this.grid[x2][j] &&
+                            this.checkDirect(x1, y1, x1, j) &&
+                            this.checkDirect(x1, j, x2, j) &&
+                            this.checkDirect(x2, j, x2, y2)) {
+                            return true;
+                        }
+                    }
+                }
+                
+                return false;
+            }
+            
+            removePair(x1, y1, x2, y2) {
+                this.grid[x1][y1] = null;
+                this.grid[x2][y2] = null;
+                // 只更新被消除的两个cell
+                this.updateCell(x1, y1);
+                this.updateCell(x2, y2);
+            }
+            
+            nextLevel() {
+                this.level++;
+                this.generateGrid();
+                // 重新生成游戏板后更新所有cell
+                for (let i = 0; i < this.rows; i++) {
+                    for (let j = 0; j < this.cols; j++) {
+                        this.updateCell(i, j);
+                    }
+                }
+                this.updateDisplay();
+                alert(`恭喜进入第 ${this.level} 关！`);
+            }
+            
+            newGame() {
+                this.level = 1;
+                this.score = 0;
+                this.updateGridSize();
+                this.createBoard();
+                this.generateGrid();
+                // 重新生成游戏板后更新所有cell
+                for (let i = 0; i < this.rows; i++) {
+                    for (let j = 0; j < this.cols; j++) {
+                        this.updateCell(i, j);
+                    }
+                }
+                this.updateDisplay();
+                this.setupEventListeners();
+            }
+            
+            showHint() {
+                // 收集所有非空格子
+                const cells = [];
+                for (let i = 0; i < this.rows; i++) {
+                    for (let j = 0; j < this.cols; j++) {
+                        if (this.grid[i][j]) {
+                            cells.push({i, j});
+                        }
+                    }
+                }
+                
+                // 只检查每个配对一次，避免重复计算
+                for (let a = 0; a < cells.length; a++) {
+                    for (let b = a + 1; b < cells.length; b++) {
+                        const {i: i1, j: j1} = cells[a];
+                        const {i: i2, j: j2} = cells[b];
+                        
+                        if (this.grid[i1][j1] === this.grid[i2][j2] && 
+                            this.canRemove(i1, j1, i2, j2)) {
+                            const cell1 = document.querySelector(`[data-row="${i1}"][data-col="${j1}"]`);
+                            const cell2 = document.querySelector(`[data-row="${i2}"][data-col="${j2}"]`);
+                            cell1.classList.add('hint');
+                            cell2.classList.add('hint');
+                            
+                            setTimeout(() => {
+                                cell1.classList.remove('hint');
+                                cell2.classList.remove('hint');
+                            }, 2000);
+                            return;
+                        }
+                    }
+                }
+                alert('没有可消除的配对！');
+            }
+            
+            refreshBoard() {
+                // 收集所有剩余的方块颜色
+                const remainingColors = [];
+                for (let i = 0; i < this.rows; i++) {
+                    for (let j = 0; j < this.cols; j++) {
+                        if (this.grid[i][j]) {
+                            remainingColors.push(this.grid[i][j]);
+                        }
+                    }
+                }
+                
+                // 随机打乱颜色
+                for (let i = remainingColors.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [remainingColors[i], remainingColors[j]] = [remainingColors[j], remainingColors[i]];
+                }
+                
+                // 将打乱后的颜色重新分配到非空位置
+                let index = 0;
+                for (let i = 0; i < this.rows; i++) {
+                    for (let j = 0; j < this.cols; j++) {
+                        if (this.grid[i][j]) {
+                            this.grid[i][j] = remainingColors[index++];
+                            // 实时更新被修改的cell
+                            this.updateCell(i, j);
+                        }
+                    }
+                }
+                
+                this.updateDisplay();
+                alert('剩余方块已刷新重组！');
+            }
+            
+            loadHighScore() {
+                try {
+                    const saved = localStorage.getItem('lianliankan_global_highscore');
+                    if (saved) {
+                        this.highScore = parseInt(saved);
+                    }
+                } catch (e) {
+                    console.log('无法加载最高分');
+                }
+            }
+            
+            saveHighScore() {
+                try {
+                    localStorage.setItem('lianliankan_global_highscore', this.highScore);
+                } catch (e) {
+                    console.log('无法保存最高分');
+                }
+            }
+        }
+
+        // 等待页面加载完成后再初始化游戏
+        window.addEventListener('load', function() {
+            console.log('页面加载完成，开始初始化游戏...');
+            window.game = new LianLianKan();
+        });
+    </script>
+</body>
+</html>
