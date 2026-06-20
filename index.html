@@ -1,0 +1,2977 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>古诗词连连看 - 边玩边学</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 10px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+
+        /* 模式选择 */
+        .mode-selector {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            border: 2px solid #e94560;
+            background: transparent;
+            color: #e94560;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+        }
+
+        .mode-btn:hover, .mode-btn.active {
+            background: #e94560;
+            color: white;
+        }
+
+        /* 数据面板 */
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #aaa;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .stat-value.warning {
+            color: #ff6b6b;
+            animation: timerPulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes timerPulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        /* 音效控制 */
+        .sound-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .sound-btn {
+            padding: 6px 12px;
+            border: 1px solid #666;
+            background: rgba(255,255,255,0.1);
+            color: #888;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .sound-btn.active {
+            border-color: #ffd700;
+            color: #ffd700;
+            background: rgba(255,215,0,0.2);
+        }
+
+        /* 游戏板 */
+        .game-board {
+            display: grid;
+            gap: 5px;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .block {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #2d3436, #636e72);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.75rem;
+            color: #fff;
+            text-align: center;
+            padding: 5px;
+            word-break: break-all;
+            min-height: 50px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .block:hover:not(.empty) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.5);
+        }
+
+        .block.selected {
+            box-shadow: 0 0 15px #ffd700, 0 0 30px #ffd700;
+            border: 2px solid #ffd700;
+        }
+
+        .block.empty {
+            background: transparent;
+            cursor: default;
+            box-shadow: none;
+        }
+
+        .block.matched {
+            animation: matchPulse 0.5s ease-out;
+        }
+
+        @keyframes matchPulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        /* 马卡龙配色 */
+        .color-1 { background: linear-gradient(135deg, #FFB3BA, #FF8E9E); }
+        .color-2 { background: linear-gradient(135deg, #FFDFBA, #FFC97A); }
+        .color-3 { background: linear-gradient(135deg, #FFFFBA, #FFF176); }
+        .color-4 { background: linear-gradient(135deg, #BAFFC9, #81C784); }
+        .color-5 { background: linear-gradient(135deg, #BAE1FF, #64B5F6); }
+        .color-6 { background: linear-gradient(135deg, #E8BAFF, #CE93D8); }
+        .color-7 { background: linear-gradient(135deg, #FFB3E6, #F48FB1); }
+        .color-8 { background: linear-gradient(135deg, #B3FFE6, #80CBC4); }
+        .color-9 { background: linear-gradient(135deg, #FFE6B3, #FFCC80); }
+        .color-10 { background: linear-gradient(135deg, #B3D9FF, #90CAF9); }
+        .color-11 { background: linear-gradient(135deg, #D9B3FF, #B39DDB); }
+        .color-12 { background: linear-gradient(135deg, #B3FFD9, #A5D6A7); }
+
+        /* 弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+            text-align: center;
+            border: 2px solid #e94560;
+        }
+
+        .modal-content h2 {
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+
+        .modal-content p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .rules-list {
+            text-align: left;
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .rules-list li {
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+
+        /* 知识卡片 */
+        .knowledge-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: left;
+        }
+
+        .knowledge-card h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .knowledge-card .author {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .knowledge-card .full-text {
+            color: #fff;
+            line-height: 1.8;
+            font-size: 1rem;
+        }
+
+        /* 烟花 */
+        .firework {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: particleFade 1s ease-out forwards;
+        }
+
+        @keyframes particleFade {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* 连接线 */
+        .connection-line {
+            position: fixed;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* 响应式 */
+        @media (max-width: 500px) {
+            h1 { font-size: 1.4rem; }
+            .stats-panel { grid-template-columns: repeat(3, 1fr); }
+            .stat-value { font-size: 0.9rem; }
+            .block { font-size: 0.65rem; min-height: 40px; }
+            .mode-btn { padding: 6px 12px; font-size: 0.75rem; }
+        }
+
+        /* 提示动画 */
+        .hint-glow {
+            animation: hintPulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes hintPulse {
+            from { box-shadow: 0 0 10px #4ecdc4; }
+            to { box-shadow: 0 0 25px #4ecdc4, 0 0 40px #4ecdc4; }
+        }
+
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        /* 主题选择 */
+        .theme-selector {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .theme-btn {
+            padding: 6px 12px;
+            border: 1px solid #4ecdc4;
+            background: transparent;
+            color: #4ecdc4;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.75rem;
+        }
+
+        .theme-btn:hover, .theme-btn.active {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .theme-btn[data-theme="spring"] { border-color: #81C784; color: #81C784; }
+        .theme-btn[data-theme="spring"].active, .theme-btn[data-theme="spring"]:hover { background: #81C784; color: white; }
+        .theme-btn[data-theme="summer"] { border-color: #FFB74D; color: #FFB74D; }
+        .theme-btn[data-theme="summer"].active, .theme-btn[data-theme="summer"]:hover { background: #FFB74D; color: white; }
+        .theme-btn[data-theme="autumn"] { border-color: #FF8A65; color: #FF8A65; }
+        .theme-btn[data-theme="autumn"].active, .theme-btn[data-theme="autumn"]:hover { background: #FF8A65; color: white; }
+        .theme-btn[data-theme="winter"] { border-color: #64B5F6; color: #64B5F6; }
+        .theme-btn[data-theme="winter"].active, .theme-btn[data-theme="winter"]:hover { background: #64B5F6; color: white; }
+        .theme-btn[data-theme="springFestival"] { border-color: #E53935; color: #E53935; }
+        .theme-btn[data-theme="springFestival"].active, .theme-btn[data-theme="springFestival"]:hover { background: #E53935; color: white; }
+        .theme-btn[data-theme="midAutumn"] { border-color: #FFD54F; color: #FFD54F; }
+        .theme-btn[data-theme="midAutumn"].active, .theme-btn[data-theme="midAutumn"]:hover { background: #FFD54F; color: white; }
+        .theme-btn[data-theme="doubleNinth"] { border-color: #9575CD; color: #9575CD; }
+        .theme-btn[data-theme="doubleNinth"].active, .theme-btn[data-theme="doubleNinth"]:hover { background: #9575CD; color: white; }
+        .theme-btn[data-theme="libai"] { border-color: #4FC3F7; color: #4FC3F7; }
+        .theme-btn[data-theme="libai"].active, .theme-btn[data-theme="libai"]:hover { background: #4FC3F7; color: white; }
+        .theme-btn[data-theme="dufu"] { border-color: #7986CB; color: #7986CB; }
+        .theme-btn[data-theme="dufu"].active, .theme-btn[data-theme="dufu"]:hover { background: #7986CB; color: white; }
+        .theme-btn[data-theme="custom"] {
+            border-color: #FF6B6B;
+            color: #FF6B6B;
+            background: linear-gradient(135deg, rgba(255,107,107,0.2), rgba(255,107,107,0.1));
+            font-weight: bold;
+            animation: customPulse 2s ease-in-out infinite;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+        .theme-btn[data-theme="custom"].active, .theme-btn[data-theme="custom"]:hover {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E8E);
+            color: white;
+            box-shadow: 0 0 20px rgba(255,107,107,0.6);
+            animation: none;
+        }
+
+        @keyframes customPulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,107,107,0.3); }
+            50% { box-shadow: 0 0 15px rgba(255,107,107,0.6); }
+        }
+
+        /* 自定义题库样式 */
+        .custom-input-group input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid #4ecdc4;
+            background: #1a1a2e;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .custom-input-group input:focus {
+            outline: none;
+            border-color: #e94560;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+        }
+
+        .custom-item {
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            background: rgba(78, 205, 196, 0.1);
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-size: 0.85rem;
+        }
+
+        .custom-item:hover {
+            background: rgba(78, 205, 196, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h1 style="margin: 0;">古诗词连连看</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" id="profileBtn" style="padding: 8px 15px;">👤 主页</button>
+                <button class="btn btn-secondary" id="classBtn" style="padding: 8px 15px;">🏫 班级</button>
+            </div>
+        </div>
+
+        <!-- 模式选择 -->
+        <div class="mode-selector">
+            <button class="mode-btn active" id="mode1">上下句配对</button>
+            <button class="mode-btn" id="mode2">诗名作者配对</button>
+            <button class="mode-btn" id="mode3">诗句意象配对</button>
+        </div>
+
+        <!-- 主题选择 -->
+        <div class="theme-selector">
+            <button class="theme-btn active" data-theme="all">全部</button>
+            <button class="theme-btn" data-theme="spring">🌸 春</button>
+            <button class="theme-btn" data-theme="summer">☀️ 夏</button>
+            <button class="theme-btn" data-theme="autumn">🍂 秋</button>
+            <button class="theme-btn" data-theme="winter">❄️ 冬</button>
+            <button class="theme-btn" data-theme="springFestival">🧨 春节</button>
+            <button class="theme-btn" data-theme="midAutumn">🌕 中秋</button>
+            <button class="theme-btn" data-theme="doubleNinth">🌿 重阳</button>
+            <button class="theme-btn" data-theme="libai">🍶 李白</button>
+            <button class="theme-btn" data-theme="dufu">📜 杜甫</button>
+            <button class="theme-btn" data-theme="custom" id="customBtn">✨ 自定义</button>
+        </div>
+
+        <!-- 数据面板 -->
+        <div class="stats-panel">
+            <div class="stat-item">
+                <div class="stat-label">当前分数</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">剩余时间</div>
+                <div class="stat-value" id="timer">3:00</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">关卡</div>
+                <div class="stat-value" id="level">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">剩余方块</div>
+                <div class="stat-value" id="remaining">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">个人最高</div>
+                <div class="stat-value" id="personalHigh">0</div>
+            </div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <button class="btn btn-primary" id="newGameBtn">新游戏</button>
+            <button class="btn btn-secondary" id="hintBtn">提示</button>
+        </div>
+
+        <!-- 音效控制 -->
+        <div class="sound-controls">
+            <button class="sound-btn active" id="bgmBtn">🎵 音乐</button>
+            <button class="sound-btn active" id="sfxBtn">🔊 音效</button>
+        </div>
+
+        <!-- 游戏板区域 -->
+        <div class="game-board-wrapper" id="gameBoardWrapper" style="position: relative;">
+            <div class="game-board" id="gameBoard"></div>
+            <!-- 开始游戏遮罩 -->
+            <div id="startOverlay" style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.85);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border-radius: 15px;
+                z-index: 10;
+            ">
+                <div style="font-size: 48px; margin-bottom: 15px;">📜</div>
+                <h2 style="color: #4ecdc4; margin-bottom: 20px;">准备开始</h2>
+                <button class="btn btn-primary" id="startGameBtn2" style="padding: 12px 40px; font-size: 1.1rem;">开始挑战</button>
+            </div>
+        </div>
+
+        <div class="footer">素材来源：《唐诗三百首》</div>
+    </div>
+
+    <!-- 规则弹窗 -->
+    <div class="modal" id="rulesModal">
+        <div class="modal-content">
+            <h2>游戏规则</h2>
+            <ul class="rules-list">
+                <li>点击两个有关联的古诗词方块进行配对消除</li>
+                <li>两个方块之间的连线拐角不能超过两个</li>
+                <li>消除所有方块后进入下一关</li>
+                <li>无路可走时游戏失败，需重新挑战</li>
+                <li>三种模式：上下句配对、诗名作者配对、诗句意象配对</li>
+            </ul>
+            <button class="btn btn-primary" id="startGameBtn">开始游戏</button>
+        </div>
+    </div>
+
+    <!-- 知识卡片弹窗 -->
+    <div class="modal" id="knowledgeModal">
+        <div class="modal-content">
+            <h2>知识卡片</h2>
+            <div class="knowledge-card" id="knowledgeCard"></div>
+            <button class="btn btn-primary" id="continueBtn">继续游戏</button>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content">
+            <h2 id="gameOverTitle">游戏结束</h2>
+            <p id="gameOverMessage"></p>
+            <p>得分：<span id="finalScore">0</span></p>
+            <div style="margin-top: 15px;">
+                <button class="btn btn-primary" id="retryBtn">重新挑战</button>
+                <button class="btn btn-secondary" id="nextLevelBtn" style="display:none;">下一关</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自定义题库弹窗 -->
+    <div class="modal" id="customModal">
+        <div class="modal-content" style="max-width: 600px; max-height: 85%;">
+            <h2>✨ 自定义题库</h2>
+            <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 15px;">创建您的专属诗词关卡，支持三种配对模式</p>
+            
+            <!-- 配对模式选择 -->
+            <div style="margin-bottom: 15px;">
+                <label style="color: #4ecdc4;">选择配对模式：</label>
+                <select id="customModeSelect" style="margin-left: 10px; padding: 5px 10px; border-radius: 5px; background: #1a1a2e; color: #fff; border: 1px solid #4ecdc4;">
+                    <option value="1">上下句配对</option>
+                    <option value="2">诗名作者配对</option>
+                    <option value="3">诗句意象配对</option>
+                </select>
+            </div>
+
+            <!-- 输入区域 -->
+            <div id="customInputArea">
+                <!-- 上下句模式输入 -->
+                <div id="mode1Inputs" class="custom-input-group">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <input type="text" id="customPart1" placeholder="上句（如：床前明月光）" style="flex: 1; padding: 8px; border-radius: 5px; background: #2a2a4e; color: #fff; border: 1px solid #4ecdc4;">
+                        <input type="text" id="customPart2" placeholder="下句（如：疑是地上霜）" style="flex: 1; padding: 8px; border-radius: 5px; background: #2a2a4e; color: #fff; border: 1px solid #4ecdc4;">
+                    </div>
+                    <input type="text" id="customTitle" placeholder="诗名（如：静夜思）" style="width: 100%; padding: 8px; border-radius: 5px; background: #2a2a4e; color: #fff; border: 1px solid #4ecdc4; margin-bottom: 10px;">
+                </div>
+                <!-- 诗名作者模式输入 -->
+                <div id="mode2Inputs" class="custom-input-group" style="display: none;">
+                    <input type="text" id="customPoemTitle" placeholder="诗名（如：静夜思）" style="width: 100%; padding: 8px; border-radius: 5px; background: #2a2a4e; color: #fff; border: 1px solid #4ecdc4; margin-bottom: 10px;">
+                    <input type="text" id="customAuthor" placeholder="作者（如：李白）" style="width: 100%; padding: 8px; border-radius: 5px; background: #2a2a4e; color: #fff; border: 1px solid #4ecdc4;">
+                </div>
+                <!-- 诗句意象模式输入 -->
+                <div id="mode3Inputs" class="custom-input-group" style="display: none;">
+                    <input type="text" id="customSentence" placeholder="诗句（如：床前明月光）" style="width: 100%; padding: 8px; border-radius: 5px; background: #2a2a4e; color: #fff; border: 1px solid #4ecdc4; margin-bottom: 10px;">
+                    <input type="text" id="customImagery" placeholder="意象（如：月光）" style="width: 100%; padding: 8px; border-radius: 5px; background: #2a2a4e; color: #fff; border: 1px solid #4ecdc4;">
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="addCustomBtn" style="margin-top: 10px;">添加题目</button>
+
+            <!-- 已添加题目列表 -->
+            <div style="margin-top: 20px; max-height: 200px; overflow-y: auto;">
+                <h4 style="color: #4ecdc4; margin-bottom: 10px;">已添加 <span id="customCount">0</span> 对题目</h4>
+                <div id="customList" style="text-align: left;"></div>
+            </div>
+
+            <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                <button class="btn btn-primary" id="startCustomGame">开始挑战</button>
+                <button class="btn btn-secondary" id="clearCustomBtn">清空题库</button>
+                <button class="btn btn-secondary" id="closeCustomBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主页弹窗 -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2>👤 个人主页</h2>
+            <div style="text-align: center; margin: 20px 0;">
+                <div style="font-size: 48px; margin-bottom: 10px;" id="profileAvatar">🙂</div>
+                <input type="text" id="profileName" placeholder="给自己起个名字" style="
+                    width: 60%;
+                    padding: 10px;
+                    border-radius: 8px;
+                    border: 1px solid #4ecdc4;
+                    background: #1a1a2e;
+                    color: #fff;
+                    text-align: center;
+                    font-size: 1.1rem;
+                ">
+                <button class="btn btn-primary" id="saveNameBtn" style="margin-left: 10px; padding: 10px 15px;">保存</button>
+            </div>
+
+            <!-- 成就展示 -->
+            <div style="margin: 20px 0;">
+                <div style="color: #4ecdc4; margin-bottom: 10px;">🎖️ 成就称号</div>
+                <div id="achievementBadge" style="
+                    padding: 10px 20px;
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    border-radius: 20px;
+                    display: inline-block;
+                    font-weight: bold;
+                    color: #fff;
+                ">初出茅庐</div>
+            </div>
+
+            <!-- 统计数据 -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                <div style="background: rgba(78,205,196,0.1); padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="color: #888; font-size: 0.85rem;">累计闯关</div>
+                    <div style="font-size: 2rem; color: #4ecdc4;" id="statTotalGames">0</div>
+                    <div style="color: #666; font-size: 0.8rem;">次</div>
+                </div>
+                <div style="background: rgba(78,205,196,0.1); padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="color: #888; font-size: 0.85rem;">闯关成功</div>
+                    <div style="font-size: 2rem; color: #4ecdc4;" id="statWins">0</div>
+                    <div style="color: #666; font-size: 0.8rem;">次</div>
+                </div>
+                <div style="background: rgba(78,205,196,0.1); padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="color: #888; font-size: 0.85rem;">闯关成功率</div>
+                    <div style="font-size: 2rem; color: #4ecdc4;" id="statWinRate">0%</div>
+                </div>
+                <div style="background: rgba(78,205,196,0.1); padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="color: #888; font-size: 0.85rem;">平均通关时长</div>
+                    <div style="font-size: 2rem; color: #4ecdc4;" id="statAvgTime">--:--</div>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" id="closeProfileBtn" style="width: 100%;">关闭</button>
+        </div>
+    </div>
+
+    <!-- 班级弹窗 -->
+    <div class="modal" id="classModal">
+        <div class="modal-content" style="max-width: 550px;">
+            <h2>🏫 班级功能</h2>
+
+            <!-- Tab切换 -->
+            <div style="display: flex; margin: 15px 0; gap: 10px;">
+                <button class="btn btn-primary" id="tabCreate" style="flex: 1;" onclick="switchClassTab('create')">创建班级</button>
+                <button class="btn btn-secondary" id="tabJoin" style="flex: 1;" onclick="switchClassTab('join')">加入班级</button>
+                <button class="btn btn-secondary" id="tabMembers" style="flex: 1;" onclick="switchClassTab('members')">班级成员</button>
+            </div>
+
+            <!-- 创建班级 -->
+            <div id="createClassArea">
+                <input type="text" id="className" placeholder="班级名称（如：诗词一班）" style="
+                    width: 100%;
+                    padding: 12px;
+                    border-radius: 8px;
+                    border: 1px solid #4ecdc4;
+                    background: #1a1a2e;
+                    color: #fff;
+                    margin-bottom: 15px;
+                    font-size: 1rem;
+                ">
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                    <span style="color: #888;">班级号：</span>
+                    <input type="text" id="newClassCode" placeholder="自动生成" readonly style="
+                        width: 120px;
+                        padding: 10px;
+                        border-radius: 8px;
+                        border: 1px solid #4ecdc4;
+                        background: #2a2a4e;
+                        color: #4ecdc4;
+                        text-align: center;
+                        font-size: 1.2rem;
+                        font-weight: bold;
+                        letter-spacing: 3px;
+                    ">
+                    <button class="btn btn-secondary" id="generateCodeBtn">生成班级号</button>
+                </div>
+                <button class="btn btn-primary" id="createClassBtn" style="width: 100%;">创建班级</button>
+            </div>
+
+            <!-- 加入班级 -->
+            <div id="joinClassArea" style="display: none;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <input type="text" id="joinClassCode" placeholder="请输入四位班级号" maxlength="4" style="
+                        width: 150px;
+                        padding: 15px;
+                        border-radius: 8px;
+                        border: 2px solid #4ecdc4;
+                        background: #1a1a2e;
+                        color: #fff;
+                        text-align: center;
+                        font-size: 1.5rem;
+                        font-weight: bold;
+                        letter-spacing: 8px;
+                    ">
+                </div>
+                <button class="btn btn-primary" id="joinClassBtn" style="width: 100%;">加入班级</button>
+            </div>
+
+            <!-- 班级成员 -->
+            <div id="classMembersArea" style="display: none;">
+                <div id="myClassInfo" style="text-align: center; margin-bottom: 15px; padding: 10px; background: rgba(78,205,196,0.1); border-radius: 8px;">
+                    <div style="color: #4ecdc4; font-weight: bold;" id="myClassName">尚未加入班级</div>
+                    <div style="color: #888; font-size: 0.85rem;">班级号：<span id="myClassCode">--</span></div>
+                </div>
+                <div style="max-height: 250px; overflow-y: auto;">
+                    <div id="membersList"></div>
+                </div>
+                <button class="btn btn-secondary" id="leaveClassBtn" style="width: 100%; margin-top: 15px; display: none;">退出班级</button>
+            </div>
+
+            <button class="btn btn-secondary" id="closeClassBtn" style="width: 100%; margin-top: 15px;">关闭</button>
+        </div>
+    </div>
+
+    <!-- PK对决弹窗 -->
+    <div class="modal" id="pkModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2>⚔️ PK对决</h2>
+            <div id="pkWaiting" style="text-align: center; padding: 30px;">
+                <div style="font-size: 48px; margin-bottom: 15px;">⚔️</div>
+                <p style="color: #888;">正在等待对方响应...</p>
+                <p style="color: #4ecdc4;" id="pkOpponent">邀请中</p>
+                <button class="btn btn-secondary" id="cancelPkBtn">取消邀请</button>
+            </div>
+            <div id="pkResult" style="display: none; text-align: center; padding: 20px;">
+                <div style="font-size: 64px; margin-bottom: 15px;" id="pkResultEmoji">🏆</div>
+                <h3 id="pkResultText" style="color: #4ecdc4;">你赢了！</h3>
+                <div style="margin: 20px 0;">
+                    <div style="display: flex; justify-content: center; gap: 30px;">
+                        <div>
+                            <div style="color: #888; font-size: 0.85rem;">你的得分</div>
+                            <div style="font-size: 2rem; color: #4ecdc4;" id="pkMyScore">0</div>
+                        </div>
+                        <div style="color: #888; font-size: 2rem;">vs</div>
+                        <div>
+                            <div style="color: #888; font-size: 0.85rem;">对方得分</div>
+                            <div style="font-size: 2rem; color: #e94560;" id="pkOpponentScore">0</div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="closePkBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 游戏配置 ====================
+        const CONFIG = {
+            pcGrid: { rows: 6, cols: 6 },
+            mobileGrid: { rows: 4, cols: 4 },
+            maxCorners: 2,
+            colors: 12,
+            baseScore: 100,
+            maxTime: 180 // 3分钟
+        };
+
+        // ==================== 古诗词数据库 ====================
+        // 模式1：上下句配对（严格按照《唐诗三百首》）
+        const POETRY_SENTENCES = [
+            // 静夜思 - 李白
+            { id: 1, part1: '床前明月光', part2: '疑是地上霜', title: '静夜思', author: '李白', full: '床前明月光，疑是地上霜。举头望明月，低头思故乡。' },
+            { id: 2, part1: '举头望明月', part2: '低头思故乡', title: '静夜思', author: '李白', full: '床前明月光，疑是地上霜。举头望明月，低头思故乡。' },
+            // 登鹳雀楼 - 王之涣
+            { id: 3, part1: '白日依山尽', part2: '黄河入海流', title: '登鹳雀楼', author: '王之涣', full: '白日依山尽，黄河入海流。欲穷千里目，更上一层楼。' },
+            { id: 4, part1: '欲穷千里目', part2: '更上一层楼', title: '登鹳雀楼', author: '王之涣', full: '白日依山尽，黄河入海流。欲穷千里目，更上一层楼。' },
+            // 春晓 - 孟浩然
+            { id: 5, part1: '春眠不觉晓', part2: '处处闻啼鸟', title: '春晓', author: '孟浩然', full: '春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。' },
+            { id: 6, part1: '夜来风雨声', part2: '花落知多少', title: '春晓', author: '孟浩然', full: '春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。' },
+            // 悯农（其二）- 李绅
+            { id: 7, part1: '锄禾日当午', part2: '汗滴禾下土', title: '悯农', author: '李绅', full: '锄禾日当午，汗滴禾下土。谁知盘中餐，粒粒皆辛苦。' },
+            { id: 8, part1: '谁知盘中餐', part2: '粒粒皆辛苦', title: '悯农', author: '李绅', full: '锄禾日当午，汗滴禾下土。谁知盘中餐，粒粒皆辛苦。' },
+            // 草 / 赋得古原草送别 - 白居易
+            { id: 9, part1: '离离原上草', part2: '一岁一枯荣', title: '草', author: '白居易', full: '离离原上草，一岁一枯荣。野火烧不尽，春风吹又生。' },
+            { id: 10, part1: '野火烧不尽', part2: '春风吹又生', title: '草', author: '白居易', full: '离离原上草，一岁一枯荣。野火烧不尽，春风吹又生。' },
+            // 相思 - 王维
+            { id: 11, part1: '红豆生南国', part2: '春来发几枝', title: '相思', author: '王维', full: '红豆生南国，春来发几枝。愿君多采撷，此物最相思。' },
+            { id: 12, part1: '愿君多采撷', part2: '此物最相思', title: '相思', author: '王维', full: '红豆生南国，春来发几枝。愿君多采撷，此物最相思。' },
+            // 江雪 - 柳宗元
+            { id: 13, part1: '千山鸟飞绝', part2: '万径人踪灭', title: '江雪', author: '柳宗元', full: '千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。' },
+            { id: 14, part1: '孤舟蓑笠翁', part2: '独钓寒江雪', title: '江雪', author: '柳宗元', full: '千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。' },
+            // 望庐山瀑布 - 李白
+            { id: 15, part1: '日照香炉生紫烟', part2: '遥看瀑布挂前川', title: '望庐山瀑布', author: '李白', full: '日照香炉生紫烟，遥看瀑布挂前川。飞流直下三千尺，疑是银河落九天。' },
+            { id: 16, part1: '飞流直下三千尺', part2: '疑是银河落九天', title: '望庐山瀑布', author: '李白', full: '日照香炉生紫烟，遥看瀑布挂前川。飞流直下三千尺，疑是银河落九天。' },
+            // 绝句 - 杜甫
+            { id: 17, part1: '两个黄鹂鸣翠柳', part2: '一行白鹭上青天', title: '绝句', author: '杜甫', full: '两个黄鹂鸣翠柳，一行白鹭上青天。窗含西岭千秋雪，门泊东吴万里船。' },
+            { id: 18, part1: '窗含西岭千秋雪', part2: '门泊东吴万里船', title: '绝句', author: '杜甫', full: '两个黄鹂鸣翠柳，一行白鹭上青天。窗含西岭千秋雪，门泊东吴万里船。' },
+            // 枫桥夜泊 - 张继
+            { id: 19, part1: '月落乌啼霜满天', part2: '江枫渔火对愁眠', title: '枫桥夜泊', author: '张继', full: '月落乌啼霜满天，江枫渔火对愁眠。姑苏城外寒山寺，夜半钟声到客船。' },
+            { id: 20, part1: '姑苏城外寒山寺', part2: '夜半钟声到客船', title: '枫桥夜泊', author: '张继', full: '月落乌啼霜满天，江枫渔火对愁眠。姑苏城外寒山寺，夜半钟声到客船。' },
+            // 游子吟 - 孟郊
+            { id: 21, part1: '慈母手中线', part2: '游子身上衣', title: '游子吟', author: '孟郊', full: '慈母手中线，游子身上衣。临行密密缝，意恐迟迟归。谁言寸草心，报得三春晖。' },
+            { id: 22, part1: '临行密密缝', part2: '意恐迟迟归', title: '游子吟', author: '孟郊', full: '慈母手中线，游子身上衣。临行密密缝，意恐迟迟归。谁言寸草心，报得三春晖。' },
+            // 出塞 - 王昌龄
+            { id: 23, part1: '秦时明月汉时关', part2: '万里长征人未还', title: '出塞', author: '王昌龄', full: '秦时明月汉时关，万里长征人未还。但使龙城飞将在，不教胡马度阴山。' },
+            { id: 24, part1: '但使龙城飞将在', part2: '不教胡马度阴山', title: '出塞', author: '王昌龄', full: '秦时明月汉时关，万里长征人未还。但使龙城飞将在，不教胡马度阴山。' },
+            // 送元二使安西 - 王维
+            { id: 25, part1: '渭城朝雨浥轻尘', part2: '客舍青青柳色新', title: '送元二使安西', author: '王维', full: '渭城朝雨浥轻尘，客舍青青柳色新。劝君更尽一杯酒，西出阳关无故人。' },
+            { id: 26, part1: '劝君更尽一杯酒', part2: '西出阳关无故人', title: '送元二使安西', author: '王维', full: '渭城朝雨浥轻尘，客舍青青柳色新。劝君更尽一杯酒，西出阳关无故人。' },
+            // 九月九日忆山东兄弟 - 王维
+            { id: 27, part1: '独在异乡为异客', part2: '每逢佳节倍思亲', title: '九月九日忆山东兄弟', author: '王维', full: '独在异乡为异客，每逢佳节倍思亲。遥知兄弟登高处，遍插茱萸少一人。' },
+            { id: 28, part1: '遥知兄弟登高处', part2: '遍插茱萸少一人', title: '九月九日忆山东兄弟', author: '王维', full: '独在异乡为异客，每逢佳节倍思亲。遥知兄弟登高处，遍插茱萸少一人。' },
+            // 望天门山 - 李白
+            { id: 29, part1: '天门中断楚江开', part2: '碧水东流至此回', title: '望天门山', author: '李白', full: '天门中断楚江开，碧水东流至此回。两岸青山相对出，孤帆一片日边来。' },
+            { id: 30, part1: '两岸青山相对出', part2: '孤帆一片日边来', title: '望天门山', author: '李白', full: '天门中断楚江开，碧水东流至此回。两岸青山相对出，孤帆一片日边来。' },
+            // 早发白帝城 - 李白
+            { id: 31, part1: '朝辞白帝彩云间', part2: '千里江陵一日还', title: '早发白帝城', author: '李白', full: '朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。' },
+            { id: 32, part1: '两岸猿声啼不住', part2: '轻舟已过万重山', title: '早发白帝城', author: '李白', full: '朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。' },
+            // 黄鹤楼送孟浩然之广陵 - 李白
+            { id: 33, part1: '故人西辞黄鹤楼', part2: '烟花三月下扬州', title: '黄鹤楼送孟浩然之广陵', author: '李白', full: '故人西辞黄鹤楼，烟花三月下扬州。孤帆远影碧空尽，唯见长江天际流。' },
+            { id: 34, part1: '孤帆远影碧空尽', part2: '唯见长江天际流', title: '黄鹤楼送孟浩然之广陵', author: '李白', full: '故人西辞黄鹤楼，烟花三月下扬州。孤帆远影碧空尽，唯见长江天际流。' },
+            // 赠汪伦 - 李白
+            { id: 35, part1: '李白乘舟将欲行', part2: '忽闻岸上踏歌声', title: '赠汪伦', author: '李白', full: '李白乘舟将欲行，忽闻岸上踏歌声。桃花潭水深千尺，不及汪伦送我情。' },
+            { id: 36, part1: '桃花潭水深千尺', part2: '不及汪伦送我情', title: '赠汪伦', author: '李白', full: '李白乘舟将欲行，忽闻岸上踏歌声。桃花潭水深千尺，不及汪伦送我情。' }
+        ];
+
+        // 模式2：诗名作者配对（严格按照《唐诗三百首》）
+        const POETRY_AUTHORS = [
+            { id: 101, title: '静夜思', author: '李白', full: '床前明月光，疑是地上霜。举头望明月，低头思故乡。' },
+            { id: 102, title: '登鹳雀楼', author: '王之涣', full: '白日依山尽，黄河入海流。欲穷千里目，更上一层楼。' },
+            { id: 103, title: '春晓', author: '孟浩然', full: '春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。' },
+            { id: 104, title: '悯农', author: '李绅', full: '锄禾日当午，汗滴禾下土。谁知盘中餐，粒粒皆辛苦。' },
+            { id: 105, title: '草', author: '白居易', full: '离离原上草，一岁一枯荣。野火烧不尽，春风吹又生。' },
+            { id: 106, title: '相思', author: '王维', full: '红豆生南国，春来发几枝。愿君多采撷，此物最相思。' },
+            { id: 107, title: '江雪', author: '柳宗元', full: '千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。' },
+            { id: 108, title: '望庐山瀑布', author: '李白', full: '日照香炉生紫烟，遥看瀑布挂前川。飞流直下三千尺，疑是银河落九天。' },
+            { id: 109, title: '绝句', author: '杜甫', full: '两个黄鹂鸣翠柳，一行白鹭上青天。窗含西岭千秋雪，门泊东吴万里船。' },
+            { id: 110, title: '枫桥夜泊', author: '张继', full: '月落乌啼霜满天，江枫渔火对愁眠。姑苏城外寒山寺，夜半钟声到客船。' },
+            { id: 111, title: '游子吟', author: '孟郊', full: '慈母手中线，游子身上衣。临行密密缝，意恐迟迟归。谁言寸草心，报得三春晖。' },
+            { id: 112, title: '出塞', author: '王昌龄', full: '秦时明月汉时关，万里长征人未还。但使龙城飞将在，不教胡马度阴山。' },
+            { id: 113, title: '送元二使安西', author: '王维', full: '渭城朝雨浥轻尘，客舍青青柳色新。劝君更尽一杯酒，西出阳关无故人。' },
+            { id: 114, title: '九月九日忆山东兄弟', author: '王维', full: '独在异乡为异客，每逢佳节倍思亲。遥知兄弟登高处，遍插茱萸少一人。' },
+            { id: 115, title: '望天门山', author: '李白', full: '天门中断楚江开，碧水东流至此回。两岸青山相对出，孤帆一片日边来。' },
+            { id: 116, title: '早发白帝城', author: '李白', full: '朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。' },
+            { id: 117, title: '黄鹤楼送孟浩然之广陵', author: '李白', full: '故人西辞黄鹤楼，烟花三月下扬州。孤帆远影碧空尽，唯见长江天际流。' },
+            { id: 118, title: '赠汪伦', author: '李白', full: '李白乘舟将欲行，忽闻岸上踏歌声。桃花潭水深千尺，不及汪伦送我情。' }
+        ];
+
+        // 模式3：诗句意象配对（严格按照《唐诗三百首》）
+        const POETRY_IMAGERY = [
+            { id: 201, sentence: '床前明月光', imagery: '月光', full: '静夜思 - 李白' },
+            { id: 202, sentence: '疑是地上霜', imagery: '秋霜', full: '静夜思 - 李白' },
+            { id: 203, sentence: '白日依山尽', imagery: '落日', full: '登鹳雀楼 - 王之涣' },
+            { id: 204, sentence: '黄河入海流', imagery: '黄河', full: '登鹳雀楼 - 王之涣' },
+            { id: 205, sentence: '春眠不觉晓', imagery: '春困', full: '春晓 - 孟浩然' },
+            { id: 206, sentence: '处处闻啼鸟', imagery: '春鸟', full: '春晓 - 孟浩然' },
+            { id: 207, sentence: '夜来风雨声', imagery: '夜雨', full: '春晓 - 孟浩然' },
+            { id: 208, sentence: '花落知多少', imagery: '落花', full: '春晓 - 孟浩然' },
+            { id: 209, sentence: '锄禾日当午', imagery: '夏日', full: '悯农 - 李绅' },
+            { id: 210, sentence: '汗滴禾下土', imagery: '农夫', full: '悯农 - 李绅' },
+            { id: 211, sentence: '谁知盘中餐', imagery: '米饭', full: '悯农 - 李绅' },
+            { id: 212, sentence: '粒粒皆辛苦', imagery: '艰辛', full: '悯农 - 李绅' },
+            { id: 213, sentence: '离离原上草', imagery: '青草', full: '草 - 白居易' },
+            { id: 214, sentence: '野火烧不尽', imagery: '野火', full: '草 - 白居易' },
+            { id: 215, sentence: '春风吹又生', imagery: '春风', full: '草 - 白居易' },
+            { id: 216, sentence: '红豆生南国', imagery: '红豆', full: '相思 - 王维' },
+            { id: 217, sentence: '此物最相思', imagery: '相思', full: '相思 - 王维' },
+            { id: 218, sentence: '千山鸟飞绝', imagery: '飞鸟', full: '江雪 - 柳宗元' },
+            { id: 219, sentence: '万径人踪灭', imagery: '小径', full: '江雪 - 柳宗元' },
+            { id: 220, sentence: '孤舟蓑笠翁', imagery: '渔翁', full: '江雪 - 柳宗元' },
+            { id: 221, sentence: '独钓寒江雪', imagery: '寒江', full: '江雪 - 柳宗元' },
+            { id: 222, sentence: '日照香炉生紫烟', imagery: '香炉峰', full: '望庐山瀑布 - 李白' },
+            { id: 223, sentence: '飞流直下三千尺', imagery: '瀑布', full: '望庐山瀑布 - 李白' },
+            { id: 224, sentence: '疑是银河落九天', imagery: '银河', full: '望庐山瀑布 - 李白' },
+            { id: 225, sentence: '两个黄鹂鸣翠柳', imagery: '黄鹂', full: '绝句 - 杜甫' },
+            { id: 226, sentence: '一行白鹭上青天', imagery: '白鹭', full: '绝句 - 杜甫' },
+            { id: 227, sentence: '窗含西岭千秋雪', imagery: '雪山', full: '绝句 - 杜甫' },
+            { id: 228, sentence: '门泊东吴万里船', imagery: '帆船', full: '绝句 - 杜甫' },
+            { id: 229, sentence: '月落乌啼霜满天', imagery: '寒霜', full: '枫桥夜泊 - 张继' },
+            { id: 230, sentence: '江枫渔火对愁眠', imagery: '渔火', full: '枫桥夜泊 - 张继' },
+            { id: 231, sentence: '姑苏城外寒山寺', imagery: '古寺', full: '枫桥夜泊 - 张继' },
+            { id: 232, sentence: '夜半钟声到客船', imagery: '夜钟', full: '枫桥夜泊 - 张继' },
+            { id: 233, sentence: '慈母手中线', imagery: '母爱', full: '游子吟 - 孟郊' },
+            { id: 234, sentence: '游子身上衣', imagery: '游子', full: '游子吟 - 孟郊' },
+            { id: 235, sentence: '秦时明月汉时关', imagery: '边关', full: '出塞 - 王昌龄' },
+            { id: 236, sentence: '但使龙城飞将在', imagery: '飞将', full: '出塞 - 王昌龄' },
+            { id: 237, sentence: '桃花潭水深千尺', imagery: '深潭', full: '赠汪伦 - 李白' },
+            { id: 238, sentence: '两岸猿声啼不住', imagery: '猿猴', full: '早发白帝城 - 李白' }
+        ];
+
+        // ==================== 主题诗句意象配对数据库 ====================
+        const THEME_IMAGERY = {
+            spring: [
+                { id: 1001, sentence: '春眠不觉晓', imagery: '春困' },
+                { id: 1001, sentence: '处处闻啼鸟', imagery: '啼鸟' },
+                { id: 1002, sentence: '夜来风雨声', imagery: '夜雨' },
+                { id: 1002, sentence: '花落知多少', imagery: '落花' },
+                { id: 1003, sentence: '红豆生南国', imagery: '红豆' },
+                { id: 1003, sentence: '春来发几枝', imagery: '春枝' },
+                { id: 1004, sentence: '离离原上草', imagery: '原草' },
+                { id: 1004, sentence: '一岁一枯荣', imagery: '枯荣' },
+                { id: 1005, sentence: '野火烧不尽', imagery: '野火' },
+                { id: 1005, sentence: '春风吹又生', imagery: '春风' },
+                { id: 1006, sentence: '两个黄鹂鸣翠柳', imagery: '黄鹂' },
+                { id: 1006, sentence: '一行白鹭上青天', imagery: '白鹭' },
+                { id: 1007, sentence: '渭城朝雨浥轻尘', imagery: '朝雨' },
+                { id: 1007, sentence: '客舍青青柳色新', imagery: '柳色' },
+                { id: 1008, sentence: '故人西辞黄鹤楼', imagery: '黄鹤' },
+                { id: 1008, sentence: '烟花三月下扬州', imagery: '烟花' },
+                { id: 1009, sentence: '好雨知时节', imagery: '好雨' },
+                { id: 1009, sentence: '当春乃发生', imagery: '春雨' },
+                { id: 1010, sentence: '随风潜入夜', imagery: '夜风' },
+                { id: 1010, sentence: '润物细无声', imagery: '细雨' },
+                { id: 1011, sentence: '国破山河在', imagery: '破国' },
+                { id: 1011, sentence: '城春草木深', imagery: '春草' },
+                { id: 1012, sentence: '感时花溅泪', imagery: '花泪' },
+                { id: 1012, sentence: '恨别鸟惊心', imagery: '惊鸟' },
+                { id: 1013, sentence: '竹外桃花三两枝', imagery: '桃花' },
+                { id: 1013, sentence: '春江水暖鸭先知', imagery: '水暖' },
+                { id: 1014, sentence: '春色满园关不住', imagery: '春色' },
+                { id: 1014, sentence: '一枝红杏出墙来', imagery: '红杏' },
+                { id: 1015, sentence: '不知细叶谁裁出', imagery: '细叶' },
+                { id: 1015, sentence: '二月春风似剪刀', imagery: '春风' },
+                { id: 1016, sentence: '碧玉妆成一树高', imagery: '碧玉' },
+                { id: 1016, sentence: '万条垂下绿丝绦', imagery: '绿丝' },
+                { id: 1017, sentence: '迟日江山丽', imagery: '迟日' },
+                { id: 1017, sentence: '春风花草香', imagery: '花草' },
+                { id: 1018, sentence: '泥融飞燕子', imagery: '燕子' },
+                { id: 1018, sentence: '沙暖睡鸳鸯', imagery: '鸳鸯' }
+            ],
+            summer: [
+                { id: 2001, sentence: '锄禾日当午', imagery: '日午' },
+                { id: 2001, sentence: '汗滴禾下土', imagery: '汗滴' },
+                { id: 2002, sentence: '谁知盘中餐', imagery: '盘中餐' },
+                { id: 2002, sentence: '粒粒皆辛苦', imagery: '辛苦' },
+                { id: 2003, sentence: '小荷才露尖尖角', imagery: '小荷' },
+                { id: 2003, sentence: '早有蜻蜓立上头', imagery: '蜻蜓' },
+                { id: 2004, sentence: '泉眼无声惜细流', imagery: '泉眼' },
+                { id: 2004, sentence: '树阴照水爱晴柔', imagery: '树阴' },
+                { id: 2005, sentence: '接天莲叶无穷碧', imagery: '莲叶' },
+                { id: 2005, sentence: '映日荷花别样红', imagery: '荷花' },
+                { id: 2006, sentence: '毕竟西湖六月中', imagery: '西湖' },
+                { id: 2006, sentence: '风光不与四时同', imagery: '风光' },
+                { id: 2007, sentence: '力尽不知热', imagery: '力尽' },
+                { id: 2007, sentence: '但惜夏日长', imagery: '夏日' },
+                { id: 2008, sentence: '绿树阴浓夏日长', imagery: '绿树' },
+                { id: 2008, sentence: '楼台倒影入池塘', imagery: '楼台' },
+                { id: 2009, sentence: '水晶帘动微风起', imagery: '微风' },
+                { id: 2009, sentence: '满架蔷薇一院香', imagery: '蔷薇' },
+                { id: 2010, sentence: '首夏犹清和', imagery: '首夏' },
+                { id: 2010, sentence: '芳草亦未歇', imagery: '芳草' },
+                { id: 2011, sentence: '清江一曲抱村流', imagery: '清江' },
+                { id: 2011, sentence: '长夏江村事事幽', imagery: '江村' },
+                { id: 2012, sentence: '荷风送香气', imagery: '荷香' },
+                { id: 2012, sentence: '竹露滴清响', imagery: '竹露' },
+                { id: 2013, sentence: '漠漠水田飞白鹭', imagery: '白鹭' },
+                { id: 2013, sentence: '阴阴夏木啭黄鹂', imagery: '黄鹂' },
+                { id: 2014, sentence: '稻花香里说丰年', imagery: '稻花' },
+                { id: 2014, sentence: '听取蛙声一片', imagery: '蛙声' },
+                { id: 2015, sentence: '明月别枝惊鹊', imagery: '明月' },
+                { id: 2015, sentence: '清风半夜鸣蝉', imagery: '清风' },
+                { id: 2016, sentence: '仲夏苦夜短', imagery: '夏夜' },
+                { id: 2016, sentence: '开轩纳微凉', imagery: '微凉' },
+                { id: 2017, sentence: '连雨不知春去', imagery: '连雨' },
+                { id: 2017, sentence: '一晴方觉夏深', imagery: '夏深' },
+                { id: 2018, sentence: '日长睡起无情思', imagery: '日长' },
+                { id: 2018, sentence: '闲看儿童捉柳花', imagery: '柳花' }
+            ],
+            autumn: [
+                { id: 3001, sentence: '床前明月光', imagery: '月光' },
+                { id: 3001, sentence: '疑是地上霜', imagery: '秋霜' },
+                { id: 3002, sentence: '举头望明月', imagery: '明月' },
+                { id: 3002, sentence: '低头思故乡', imagery: '思乡' },
+                { id: 3003, sentence: '月落乌啼霜满天', imagery: '寒霜' },
+                { id: 3003, sentence: '江枫渔火对愁眠', imagery: '渔火' },
+                { id: 3004, sentence: '姑苏城外寒山寺', imagery: '寒山寺' },
+                { id: 3004, sentence: '夜半钟声到客船', imagery: '钟声' },
+                { id: 3005, sentence: '独在异乡为异客', imagery: '异客' },
+                { id: 3005, sentence: '每逢佳节倍思亲', imagery: '思亲' },
+                { id: 3006, sentence: '遥知兄弟登高处', imagery: '登高' },
+                { id: 3006, sentence: '遍插茱萸少一人', imagery: '茱萸' },
+                { id: 3007, sentence: '停车坐爱枫林晚', imagery: '枫林' },
+                { id: 3007, sentence: '霜叶红于二月花', imagery: '霜叶' },
+                { id: 3008, sentence: '远上寒山石径斜', imagery: '寒山' },
+                { id: 3008, sentence: '白云生处有人家', imagery: '白云' },
+                { id: 3009, sentence: '空山新雨后', imagery: '新雨' },
+                { id: 3009, sentence: '天气晚来秋', imagery: '晚秋' },
+                { id: 3010, sentence: '明月松间照', imagery: '松月' },
+                { id: 3010, sentence: '清泉石上流', imagery: '清泉' },
+                { id: 3011, sentence: '银烛秋光冷画屏', imagery: '秋光' },
+                { id: 3011, sentence: '轻罗小扇扑流萤', imagery: '流萤' },
+                { id: 3012, sentence: '天阶夜色凉如水', imagery: '夜色' },
+                { id: 3012, sentence: '坐看牵牛织女星', imagery: '牵牛星' },
+                { id: 3013, sentence: '自古逢秋悲寂寥', imagery: '寂寥' },
+                { id: 3013, sentence: '我言秋日胜春朝', imagery: '秋日' },
+                { id: 3014, sentence: '晴空一鹤排云上', imagery: '白鹤' },
+                { id: 3014, sentence: '便引诗情到碧霄', imagery: '碧霄' },
+                { id: 3015, sentence: '秋风起兮白云飞', imagery: '秋风' },
+                { id: 3015, sentence: '草木黄落兮雁南归', imagery: '雁归' },
+                { id: 3016, sentence: '落霞与孤鹜齐飞', imagery: '落霞' },
+                { id: 3016, sentence: '秋水共长天一色', imagery: '秋水' },
+                { id: 3017, sentence: '无边落木萧萧下', imagery: '落木' },
+                { id: 3017, sentence: '不尽长江滚滚来', imagery: '长江' },
+                { id: 3018, sentence: '万里悲秋常作客', imagery: '悲秋' },
+                { id: 3018, sentence: '百年多病独登台', imagery: '多病' }
+            ],
+            winter: [
+                { id: 4001, sentence: '千山鸟飞绝', imagery: '鸟绝' },
+                { id: 4001, sentence: '万径人踪灭', imagery: '人踪灭' },
+                { id: 4002, sentence: '孤舟蓑笠翁', imagery: '渔翁' },
+                { id: 4002, sentence: '独钓寒江雪', imagery: '寒江' },
+                { id: 4003, sentence: '窗含西岭千秋雪', imagery: '雪山' },
+                { id: 4003, sentence: '门泊东吴万里船', imagery: '帆船' },
+                { id: 4004, sentence: '白日依山尽', imagery: '落日' },
+                { id: 4004, sentence: '黄河入海流', imagery: '黄河' },
+                { id: 4005, sentence: '欲穷千里目', imagery: '千里目' },
+                { id: 4005, sentence: '更上一层楼', imagery: '高楼' },
+                { id: 4006, sentence: '柴门闻犬吠', imagery: '犬吠' },
+                { id: 4006, sentence: '风雪夜归人', imagery: '夜归' },
+                { id: 4007, sentence: '日暮苍山远', imagery: '苍山' },
+                { id: 4007, sentence: '天寒白屋贫', imagery: '白屋' },
+                { id: 4008, sentence: '墙角数枝梅', imagery: '寒梅' },
+                { id: 4008, sentence: '凌寒独自开', imagery: '独开' },
+                { id: 4009, sentence: '遥知不是雪', imagery: '雪影' },
+                { id: 4009, sentence: '为有暗香来', imagery: '暗香' },
+                { id: 4010, sentence: '北风卷地白草折', imagery: '北风' },
+                { id: 4010, sentence: '胡天八月即飞雪', imagery: '飞雪' },
+                { id: 4011, sentence: '忽如一夜春风来', imagery: '春风' },
+                { id: 4011, sentence: '千树万树梨花开', imagery: '梨花' },
+                { id: 4012, sentence: '燕山雪花大如席', imagery: '雪花' },
+                { id: 4012, sentence: '片片吹落轩辕台', imagery: '轩辕台' },
+                { id: 4013, sentence: '晚来天欲雪', imagery: '暮雪' },
+                { id: 4013, sentence: '能饮一杯无', imagery: '一杯' },
+                { id: 4014, sentence: '绿蚁新醅酒', imagery: '新醅酒' },
+                { id: 4014, sentence: '红泥小火炉', imagery: '火炉' },
+                { id: 4015, sentence: '梅须逊雪三分白', imagery: '梅雪' },
+                { id: 4015, sentence: '雪却输梅一段香', imagery: '梅香' },
+                { id: 4016, sentence: '有梅无雪不精神', imagery: '梅精神' },
+                { id: 4016, sentence: '有雪无诗俗了人', imagery: '雪诗' },
+                { id: 4017, sentence: '大雪压青松', imagery: '大雪' },
+                { id: 4017, sentence: '青松挺且直', imagery: '青松' },
+                { id: 4018, sentence: '要知松高洁', imagery: '高洁' },
+                { id: 4018, sentence: '待到雪化时', imagery: '雪化' }
+            ],
+            springFestival: [
+                { id: 5001, sentence: '爆竹声中一岁除', imagery: '爆竹' },
+                { id: 5001, sentence: '春风送暖入屠苏', imagery: '屠苏' },
+                { id: 5002, sentence: '千门万户曈曈日', imagery: '曈日' },
+                { id: 5002, sentence: '总把新桃换旧符', imagery: '新桃' },
+                { id: 5003, sentence: '故乡今夜思千里', imagery: '思乡' },
+                { id: 5003, sentence: '霜鬓明朝又一年', imagery: '霜鬓' },
+                { id: 5004, sentence: '旅馆寒灯独不眠', imagery: '寒灯' },
+                { id: 5004, sentence: '客心何事转凄然', imagery: '凄然' },
+                { id: 5005, sentence: '明年岂无年', imagery: '新年' },
+                { id: 5005, sentence: '心事恐蹉跎', imagery: '心事' },
+                { id: 5006, sentence: '努力尽今夕', imagery: '今夕' },
+                { id: 5006, sentence: '少年犹可夸', imagery: '少年' },
+                { id: 5007, sentence: '半盏屠苏犹未举', imagery: '屠苏' },
+                { id: 5007, sentence: '灯前小草写桃符', imagery: '桃符' },
+                { id: 5008, sentence: '北风吹雪四更初', imagery: '北风吹雪' },
+                { id: 5008, sentence: '嘉瑞天教及岁除', imagery: '瑞雪' },
+                { id: 5009, sentence: '不求见面惟通谒', imagery: '拜年' },
+                { id: 5009, sentence: '名纸朝来满敝庐', imagery: '名纸' },
+                { id: 5010, sentence: '我亦随人投数纸', imagery: '投纸' },
+                { id: 5010, sentence: '世情嫌简不嫌虚', imagery: '世情' },
+                { id: 5011, sentence: '命随年欲尽', imagery: '年尽' },
+                { id: 5011, sentence: '身与世俱忘', imagery: '世忘' },
+                { id: 5012, sentence: '乾坤空落落', imagery: '乾坤' },
+                { id: 5012, sentence: '岁月去堂堂', imagery: '岁月' },
+                { id: 5013, sentence: '一樽岁酒拜庭除', imagery: '岁酒' },
+                { id: 5013, sentence: '稚子牵衣慰屏居', imagery: '稚子' },
+                { id: 5014, sentence: '昨夜斗回北', imagery: '斗回' },
+                { id: 5014, sentence: '今朝岁起东', imagery: '岁起' },
+                { id: 5015, sentence: '续明催画烛', imagery: '画烛' },
+                { id: 5015, sentence: '守岁接长筵', imagery: '长筵' },
+                { id: 5016, sentence: '守岁家家应未卧', imagery: '守岁' },
+                { id: 5016, sentence: '相思那得梦魂来', imagery: '梦魂' },
+                { id: 5017, sentence: '一年将尽夜', imagery: '年尽夜' },
+                { id: 5017, sentence: '万里未归人', imagery: '未归' },
+                { id: 5018, sentence: '寒灯独可亲', imagery: '寒灯' },
+                { id: 5018, sentence: '旅馆谁相问', imagery: '旅馆' }
+            ],
+            midAutumn: [
+                { id: 6001, sentence: '床前明月光', imagery: '月光' },
+                { id: 6001, sentence: '疑是地上霜', imagery: '秋霜' },
+                { id: 6002, sentence: '举头望明月', imagery: '明月' },
+                { id: 6002, sentence: '低头思故乡', imagery: '思乡' },
+                { id: 6003, sentence: '海上生明月', imagery: '海月' },
+                { id: 6003, sentence: '天涯共此时', imagery: '天涯' },
+                { id: 6004, sentence: '情人怨遥夜', imagery: '遥夜' },
+                { id: 6004, sentence: '竟夕起相思', imagery: '相思' },
+                { id: 6005, sentence: '明月几时有', imagery: '明月' },
+                { id: 6005, sentence: '把酒问青天', imagery: '青天' },
+                { id: 6006, sentence: '但愿人长久', imagery: '长久' },
+                { id: 6006, sentence: '千里共婵娟', imagery: '婵娟' },
+                { id: 6007, sentence: '人有悲欢离合', imagery: '悲欢' },
+                { id: 6007, sentence: '月有阴晴圆缺', imagery: '阴晴' },
+                { id: 6008, sentence: '小时不识月', imagery: '童趣' },
+                { id: 6008, sentence: '呼作白玉盘', imagery: '玉盘' },
+                { id: 6009, sentence: '又疑瑶台镜', imagery: '瑶台' },
+                { id: 6009, sentence: '飞在青云端', imagery: '青云' },
+                { id: 6010, sentence: '明月出天山', imagery: '天山' },
+                { id: 6010, sentence: '苍茫云海间', imagery: '云海' },
+                { id: 6011, sentence: '长风几万里', imagery: '长风' },
+                { id: 6011, sentence: '吹度玉门关', imagery: '玉门关' },
+                { id: 6012, sentence: '露从今夜白', imagery: '露白' },
+                { id: 6012, sentence: '月是故乡明', imagery: '故乡月' },
+                { id: 6013, sentence: '今夜月明人尽望', imagery: '月明' },
+                { id: 6013, sentence: '不知秋思落谁家', imagery: '秋思' },
+                { id: 6014, sentence: '中庭地白树栖鸦', imagery: '栖鸦' },
+                { id: 6014, sentence: '冷露无声湿桂花', imagery: '桂花' },
+                { id: 6015, sentence: '明月何皎皎', imagery: '皎月' },
+                { id: 6015, sentence: '照我罗床帏', imagery: '罗帏' },
+                { id: 6016, sentence: '此夜若无月', imagery: '无月' },
+                { id: 6016, sentence: '一年虚过秋', imagery: '虚秋' },
+                { id: 6017, sentence: '皓魄当空宝镜升', imagery: '宝镜' },
+                { id: 6017, sentence: '云间仙籁寂无声', imagery: '仙籁' },
+                { id: 6018, sentence: '平分秋色一轮满', imagery: '秋月' },
+                { id: 6018, sentence: '长伴云衢千里明', imagery: '云衢' }
+            ],
+            doubleNinth: [
+                { id: 7001, sentence: '独在异乡为异客', imagery: '异客' },
+                { id: 7001, sentence: '每逢佳节倍思亲', imagery: '思亲' },
+                { id: 7002, sentence: '遥知兄弟登高处', imagery: '登高' },
+                { id: 7002, sentence: '遍插茱萸少一人', imagery: '茱萸' },
+                { id: 7003, sentence: '待到重阳日', imagery: '重阳' },
+                { id: 7003, sentence: '还来就菊花', imagery: '菊花' },
+                { id: 7004, sentence: '开轩面场圃', imagery: '场圃' },
+                { id: 7004, sentence: '把酒话桑麻', imagery: '桑麻' },
+                { id: 7005, sentence: '尘世难逢开口笑', imagery: '开口笑' },
+                { id: 7005, sentence: '菊花须插满头归', imagery: '满头菊' },
+                { id: 7006, sentence: '江涵秋影雁初飞', imagery: '秋雁' },
+                { id: 7006, sentence: '与客携壶上翠微', imagery: '翠微' },
+                { id: 7007, sentence: '人生易老天难老', imagery: '天老' },
+                { id: 7007, sentence: '岁岁重阳', imagery: '重阳' },
+                { id: 7008, sentence: '今又重阳', imagery: '今重阳' },
+                { id: 7008, sentence: '战地黄花分外香', imagery: '黄花' },
+                { id: 7009, sentence: '佳节又重阳', imagery: '佳节' },
+                { id: 7009, sentence: '玉枕纱厨', imagery: '玉枕' },
+                { id: 7010, sentence: '东篱把酒黄昏后', imagery: '东篱' },
+                { id: 7010, sentence: '有暗香盈袖', imagery: '暗香' },
+                { id: 7011, sentence: '莫道不销魂', imagery: '销魂' },
+                { id: 7011, sentence: '人比黄花瘦', imagery: '人瘦' },
+                { id: 7012, sentence: '他乡共酌金花酒', imagery: '金花酒' },
+                { id: 7012, sentence: '万里同悲鸿雁天', imagery: '鸿雁' },
+                { id: 7013, sentence: '九月九日眺山川', imagery: '山川' },
+                { id: 7013, sentence: '归心归望积风烟', imagery: '风烟' },
+                { id: 7014, sentence: '强欲登高去', imagery: '登高' },
+                { id: 7014, sentence: '无人送酒来', imagery: '送酒' },
+                { id: 7015, sentence: '遥怜故园菊', imagery: '故园菊' },
+                { id: 7015, sentence: '应傍战场开', imagery: '战场' },
+                { id: 7016, sentence: '菊花何太苦', imagery: '菊花苦' },
+                { id: 7016, sentence: '遭此两重阳', imagery: '两重阳' },
+                { id: 7017, sentence: '昨日登高罢', imagery: '登高罢' },
+                { id: 7017, sentence: '今朝更举觞', imagery: '举觞' },
+                { id: 7018, sentence: '又是过重阳', imagery: '过重阳' },
+                { id: 7018, sentence: '台榭登临处', imagery: '台榭' }
+            ],
+            libai: [
+                { id: 8001, sentence: '床前明月光', imagery: '月光' },
+                { id: 8001, sentence: '疑是地上霜', imagery: '秋霜' },
+                { id: 8002, sentence: '举头望明月', imagery: '明月' },
+                { id: 8002, sentence: '低头思故乡', imagery: '思乡' },
+                { id: 8003, sentence: '日照香炉生紫烟', imagery: '紫烟' },
+                { id: 8003, sentence: '遥看瀑布挂前川', imagery: '瀑布' },
+                { id: 8004, sentence: '飞流直下三千尺', imagery: '飞流' },
+                { id: 8004, sentence: '疑是银河落九天', imagery: '银河' },
+                { id: 8005, sentence: '朝辞白帝彩云间', imagery: '彩云' },
+                { id: 8005, sentence: '千里江陵一日还', imagery: '江陵' },
+                { id: 8006, sentence: '两岸猿声啼不住', imagery: '猿声' },
+                { id: 8006, sentence: '轻舟已过万重山', imagery: '轻舟' },
+                { id: 8007, sentence: '故人西辞黄鹤楼', imagery: '黄鹤' },
+                { id: 8007, sentence: '烟花三月下扬州', imagery: '烟花' },
+                { id: 8008, sentence: '孤帆远影碧空尽', imagery: '孤帆' },
+                { id: 8008, sentence: '唯见长江天际流', imagery: '长江' },
+                { id: 8009, sentence: '天门中断楚江开', imagery: '天门' },
+                { id: 8009, sentence: '碧水东流至此回', imagery: '碧水' },
+                { id: 8010, sentence: '两岸青山相对出', imagery: '青山' },
+                { id: 8010, sentence: '孤帆一片日边来', imagery: '日边' },
+                { id: 8011, sentence: '李白乘舟将欲行', imagery: '乘舟' },
+                { id: 8011, sentence: '忽闻岸上踏歌声', imagery: '踏歌' },
+                { id: 8012, sentence: '桃花潭水深千尺', imagery: '潭水' },
+                { id: 8012, sentence: '不及汪伦送我情', imagery: '深情' },
+                { id: 8013, sentence: '小时不识月', imagery: '童趣' },
+                { id: 8013, sentence: '呼作白玉盘', imagery: '玉盘' },
+                { id: 8014, sentence: '又疑瑶台镜', imagery: '瑶台' },
+                { id: 8014, sentence: '飞在青云端', imagery: '青云' },
+                { id: 8015, sentence: '明月出天山', imagery: '天山' },
+                { id: 8015, sentence: '苍茫云海间', imagery: '云海' },
+                { id: 8016, sentence: '长风几万里', imagery: '长风' },
+                { id: 8016, sentence: '吹度玉门关', imagery: '玉门关' },
+                { id: 8017, sentence: '众鸟高飞尽', imagery: '鸟尽' },
+                { id: 8017, sentence: '孤云独去闲', imagery: '孤云' },
+                { id: 8018, sentence: '相看两不厌', imagery: '相看' },
+                { id: 8018, sentence: '只有敬亭山', imagery: '敬亭山' }
+            ],
+            dufu: [
+                { id: 9001, sentence: '两个黄鹂鸣翠柳', imagery: '黄鹂' },
+                { id: 9001, sentence: '一行白鹭上青天', imagery: '白鹭' },
+                { id: 9002, sentence: '窗含西岭千秋雪', imagery: '雪山' },
+                { id: 9002, sentence: '门泊东吴万里船', imagery: '帆船' },
+                { id: 9003, sentence: '国破山河在', imagery: '破国' },
+                { id: 9003, sentence: '城春草木深', imagery: '春草' },
+                { id: 9004, sentence: '感时花溅泪', imagery: '花泪' },
+                { id: 9004, sentence: '恨别鸟惊心', imagery: '惊鸟' },
+                { id: 9005, sentence: '好雨知时节', imagery: '好雨' },
+                { id: 9005, sentence: '当春乃发生', imagery: '春雨' },
+                { id: 9006, sentence: '随风潜入夜', imagery: '夜风' },
+                { id: 9006, sentence: '润物细无声', imagery: '细雨' },
+                { id: 9007, sentence: '迟日江山丽', imagery: '迟日' },
+                { id: 9007, sentence: '春风花草香', imagery: '花草' },
+                { id: 9008, sentence: '泥融飞燕子', imagery: '燕子' },
+                { id: 9008, sentence: '沙暖睡鸳鸯', imagery: '鸳鸯' },
+                { id: 9009, sentence: '露从今夜白', imagery: '露白' },
+                { id: 9009, sentence: '月是故乡明', imagery: '故乡月' },
+                { id: 9010, sentence: '有弟皆分散', imagery: '分散' },
+                { id: 9010, sentence: '无家问死生', imagery: '死生' },
+                { id: 9011, sentence: '无边落木萧萧下', imagery: '落木' },
+                { id: 9011, sentence: '不尽长江滚滚来', imagery: '长江' },
+                { id: 9012, sentence: '万里悲秋常作客', imagery: '悲秋' },
+                { id: 9012, sentence: '百年多病独登台', imagery: '多病' },
+                { id: 9013, sentence: '会当凌绝顶', imagery: '绝顶' },
+                { id: 9013, sentence: '一览众山小', imagery: '众山' },
+                { id: 9014, sentence: '荡胸生层云', imagery: '层云' },
+                { id: 9014, sentence: '决眦入归鸟', imagery: '归鸟' },
+                { id: 9015, sentence: '朱门酒肉臭', imagery: '朱门' },
+                { id: 9015, sentence: '路有冻死骨', imagery: '冻骨' },
+                { id: 9016, sentence: '星垂平野阔', imagery: '星垂' },
+                { id: 9016, sentence: '月涌大江流', imagery: '大江' },
+                { id: 9017, sentence: '名岂文章著', imagery: '文章' },
+                { id: 9017, sentence: '官应老病休', imagery: '老病' },
+                { id: 9018, sentence: '清江一曲抱村流', imagery: '清江' },
+                { id: 9018, sentence: '长夏江村事事幽', imagery: '江村' }
+            ]
+        };
+
+        // ==================== 主题诗词数据库 ====================
+        const THEME_POETRY = {
+            // 春季主题
+            spring: [
+                { id: 1001, part1: '春眠不觉晓', part2: '处处闻啼鸟', title: '春晓', author: '孟浩然', sentence: '春眠不觉晓', imagery: '春鸟', full: '春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。' },
+                { id: 1002, part1: '夜来风雨声', part2: '花落知多少', title: '春晓', author: '孟浩然', sentence: '夜来风雨声', imagery: '风雨', full: '春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。' },
+                { id: 1003, part1: '红豆生南国', part2: '春来发几枝', title: '相思', author: '王维', sentence: '红豆生南国', imagery: '红豆', full: '红豆生南国，春来发几枝。愿君多采撷，此物最相思。' },
+                { id: 1004, part1: '离离原上草', part2: '一岁一枯荣', title: '草', author: '白居易', sentence: '离离原上草', imagery: '春草', full: '离离原上草，一岁一枯荣。野火烧不尽，春风吹又生。' },
+                { id: 1005, part1: '野火烧不尽', part2: '春风吹又生', title: '草', author: '白居易', sentence: '野火烧不尽', imagery: '春风', full: '离离原上草，一岁一枯荣。野火烧不尽，春风吹又生。' },
+                { id: 1006, part1: '两个黄鹂鸣翠柳', part2: '一行白鹭上青天', title: '绝句', author: '杜甫', sentence: '两个黄鹂鸣翠柳', imagery: '黄鹂', full: '两个黄鹂鸣翠柳，一行白鹭上青天。窗含西岭千秋雪，门泊东吴万里船。' },
+                { id: 1007, part1: '渭城朝雨浥轻尘', part2: '客舍青青柳色新', title: '送元二使安西', author: '王维', sentence: '渭城朝雨浥轻尘', imagery: '朝雨', full: '渭城朝雨浥轻尘，客舍青青柳色新。劝君更尽一杯酒，西出阳关无故人。' },
+                { id: 1008, part1: '故人西辞黄鹤楼', part2: '烟花三月下扬州', title: '黄鹤楼送孟浩然之广陵', author: '李白', sentence: '故人西辞黄鹤楼', imagery: '黄鹤楼', full: '故人西辞黄鹤楼，烟花三月下扬州。孤帆远影碧空尽，唯见长江天际流。' },
+                { id: 1009, part1: '好雨知时节', part2: '当春乃发生', title: '春夜喜雨', author: '杜甫', sentence: '好雨知时节', imagery: '春雨', full: '好雨知时节，当春乃发生。随风潜入夜，润物细无声。' },
+                { id: 1010, part1: '随风潜入夜', part2: '润物细无声', title: '春夜喜雨', author: '杜甫', sentence: '随风潜入夜', imagery: '细雨', full: '好雨知时节，当春乃发生。随风潜入夜，润物细无声。' },
+                { id: 1011, part1: '国破山河在', part2: '城春草木深', title: '春望', author: '杜甫', sentence: '国破山河在', imagery: '春望', full: '国破山河在，城春草木深。感时花溅泪，恨别鸟惊心。' },
+                { id: 1012, part1: '感时花溅泪', part2: '恨别鸟惊心', title: '春望', author: '杜甫', sentence: '感时花溅泪', imagery: '花泪', full: '国破山河在，城春草木深。感时花溅泪，恨别鸟惊心。' },
+                { id: 1013, part1: '竹外桃花三两枝', part2: '春江水暖鸭先知', title: '惠崇春江晚景', author: '苏轼', sentence: '竹外桃花三两枝', imagery: '桃花', full: '竹外桃花三两枝，春江水暖鸭先知。蒌蒿满地芦芽短，正是河豚欲上时。' },
+                { id: 1014, part1: '春色满园关不住', part2: '一枝红杏出墙来', title: '游园不值', author: '叶绍翁', sentence: '春色满园关不住', imagery: '红杏', full: '应怜屐齿印苍苔，小扣柴扉久不开。春色满园关不住，一枝红杏出墙来。' },
+                { id: 1015, part1: '不知细叶谁裁出', part2: '二月春风似剪刀', title: '咏柳', author: '贺知章', sentence: '不知细叶谁裁出', imagery: '春风', full: '碧玉妆成一树高，万条垂下绿丝绦。不知细叶谁裁出，二月春风似剪刀。' },
+                { id: 1016, part1: '碧玉妆成一树高', part2: '万条垂下绿丝绦', title: '咏柳', author: '贺知章', sentence: '碧玉妆成一树高', imagery: '春柳', full: '碧玉妆成一树高，万条垂下绿丝绦。不知细叶谁裁出，二月春风似剪刀。' },
+                { id: 1017, part1: '迟日江山丽', part2: '春风花草香', title: '绝句二首', author: '杜甫', sentence: '迟日江山丽', imagery: '春光', full: '迟日江山丽，春风花草香。泥融飞燕子，沙暖睡鸳鸯。' },
+                { id: 1018, part1: '泥融飞燕子', part2: '沙暖睡鸳鸯', title: '绝句二首', author: '杜甫', sentence: '泥融飞燕子', imagery: '燕子', full: '迟日江山丽，春风花草香。泥融飞燕子，沙暖睡鸳鸯。' }
+            ],
+            // 夏季主题
+            summer: [
+                { id: 2001, part1: '锄禾日当午', part2: '汗滴禾下土', title: '悯农', author: '李绅', sentence: '锄禾日当午', imagery: '烈日', full: '锄禾日当午，汗滴禾下土。谁知盘中餐，粒粒皆辛苦。' },
+                { id: 2002, part1: '谁知盘中餐', part2: '粒粒皆辛苦', title: '悯农', author: '李绅', sentence: '谁知盘中餐', imagery: '农忙', full: '锄禾日当午，汗滴禾下土。谁知盘中餐，粒粒皆辛苦。' },
+                { id: 2003, part1: '小荷才露尖尖角', part2: '早有蜻蜓立上头', title: '小池', author: '杨万里', sentence: '小荷才露尖尖角', imagery: '蜻蜓', full: '泉眼无声惜细流，树阴照水爱晴柔。小荷才露尖尖角，早有蜻蜓立上头。' },
+                { id: 2004, part1: '泉眼无声惜细流', part2: '树阴照水爱晴柔', title: '小池', author: '杨万里', sentence: '泉眼无声惜细流', imagery: '清泉', full: '泉眼无声惜细流，树阴照水爱晴柔。小荷才露尖尖角，早有蜻蜓立上头。' },
+                { id: 2005, part1: '接天莲叶无穷碧', part2: '映日荷花别样红', title: '晓出净慈寺送林子方', author: '杨万里', sentence: '接天莲叶无穷碧', imagery: '荷花', full: '毕竟西湖六月中，风光不与四时同。接天莲叶无穷碧，映日荷花别样红。' },
+                { id: 2006, part1: '毕竟西湖六月中', part2: '风光不与四时同', title: '晓出净慈寺送林子方', author: '杨万里', sentence: '毕竟西湖六月中', imagery: '西湖', full: '毕竟西湖六月中，风光不与四时同。接天莲叶无穷碧，映日荷花别样红。' },
+                { id: 2007, part1: '力尽不知热', part2: '但惜夏日长', title: '观刈麦', author: '白居易', sentence: '力尽不知热', imagery: '夏忙', full: '力尽不知热，但惜夏日长。' },
+                { id: 2008, part1: '绿树阴浓夏日长', part2: '楼台倒影入池塘', title: '山亭夏日', author: '高骈', sentence: '绿树阴浓夏日长', imagery: '绿树', full: '绿树阴浓夏日长，楼台倒影入池塘。水晶帘动微风起，满架蔷薇一院香。' },
+                { id: 2009, part1: '水晶帘动微风起', part2: '满架蔷薇一院香', title: '山亭夏日', author: '高骈', sentence: '水晶帘动微风起', imagery: '微风', full: '绿树阴浓夏日长，楼台倒影入池塘。水晶帘动微风起，满架蔷薇一院香。' },
+                { id: 2010, part1: '首夏犹清和', part2: '芳草亦未歇', title: '游赤石进帆海', author: '谢灵运', sentence: '首夏犹清和', imagery: '芳草', full: '首夏犹清和，芳草亦未歇。' },
+                { id: 2011, part1: '清江一曲抱村流', part2: '长夏江村事事幽', title: '江村', author: '杜甫', sentence: '清江一曲抱村流', imagery: '江村', full: '清江一曲抱村流，长夏江村事事幽。' },
+                { id: 2012, part1: '荷风送香气', part2: '竹露滴清响', title: '夏日南亭怀辛大', author: '孟浩然', sentence: '荷风送香气', imagery: '荷香', full: '荷风送香气，竹露滴清响。' },
+                { id: 2013, part1: '漠漠水田飞白鹭', part2: '阴阴夏木啭黄鹂', title: '积雨辋川庄作', author: '王维', sentence: '漠漠水田飞白鹭', imagery: '白鹭', full: '漠漠水田飞白鹭，阴阴夏木啭黄鹂。' },
+                { id: 2014, part1: '稻花香里说丰年', part2: '听取蛙声一片', title: '西江月', author: '辛弃疾', sentence: '稻花香里说丰年', imagery: '稻花', full: '稻花香里说丰年，听取蛙声一片。' },
+                { id: 2015, part1: '明月别枝惊鹊', part2: '清风半夜鸣蝉', title: '西江月', author: '辛弃疾', sentence: '明月别枝惊鹊', imagery: '明月', full: '明月别枝惊鹊，清风半夜鸣蝉。' },
+                { id: 2016, part1: '仲夏苦夜短', part2: '开轩纳微凉', title: '夏夜叹', author: '杜甫', sentence: '仲夏苦夜短', imagery: '夏夜', full: '仲夏苦夜短，开轩纳微凉。' },
+                { id: 2017, part1: '连雨不知春去', part2: '一晴方觉夏深', title: '喜晴', author: '范成大', sentence: '连雨不知春去', imagery: '夏晴', full: '连雨不知春去，一晴方觉夏深。' },
+                { id: 2018, part1: '日长睡起无情思', part2: '闲看儿童捉柳花', title: '闲居初夏午睡起', author: '杨万里', sentence: '日长睡起无情思', imagery: '夏日', full: '日长睡起无情思，闲看儿童捉柳花。' }
+            ],
+            // 秋季主题
+            autumn: [
+                { id: 3001, part1: '床前明月光', part2: '疑是地上霜', title: '静夜思', author: '李白', sentence: '床前明月光', imagery: '明月', full: '床前明月光，疑是地上霜。举头望明月，低头思故乡。' },
+                { id: 3002, part1: '举头望明月', part2: '低头思故乡', title: '静夜思', author: '李白', sentence: '举头望明月', imagery: '思乡', full: '床前明月光，疑是地上霜。举头望明月，低头思故乡。' },
+                { id: 3003, part1: '月落乌啼霜满天', part2: '江枫渔火对愁眠', title: '枫桥夜泊', author: '张继', sentence: '月落乌啼霜满天', imagery: '秋霜', full: '月落乌啼霜满天，江枫渔火对愁眠。姑苏城外寒山寺，夜半钟声到客船。' },
+                { id: 3004, part1: '姑苏城外寒山寺', part2: '夜半钟声到客船', title: '枫桥夜泊', author: '张继', sentence: '姑苏城外寒山寺', imagery: '钟声', full: '月落乌啼霜满天，江枫渔火对愁眠。姑苏城外寒山寺，夜半钟声到客船。' },
+                { id: 3005, part1: '独在异乡为异客', part2: '每逢佳节倍思亲', title: '九月九日忆山东兄弟', author: '王维', sentence: '独在异乡为异客', imagery: '思亲', full: '独在异乡为异客，每逢佳节倍思亲。遥知兄弟登高处，遍插茱萸少一人。' },
+                { id: 3006, part1: '遥知兄弟登高处', part2: '遍插茱萸少一人', title: '九月九日忆山东兄弟', author: '王维', sentence: '遥知兄弟登高处', imagery: '登高', full: '独在异乡为异客，每逢佳节倍思亲。遥知兄弟登高处，遍插茱萸少一人。' },
+                { id: 3007, part1: '停车坐爱枫林晚', part2: '霜叶红于二月花', title: '山行', author: '杜牧', sentence: '停车坐爱枫林晚', imagery: '枫叶', full: '远上寒山石径斜，白云生处有人家。停车坐爱枫林晚，霜叶红于二月花。' },
+                { id: 3008, part1: '远上寒山石径斜', part2: '白云生处有人家', title: '山行', author: '杜牧', sentence: '远上寒山石径斜', imagery: '寒山', full: '远上寒山石径斜，白云生处有人家。停车坐爱枫林晚，霜叶红于二月花。' },
+                { id: 3009, part1: '空山新雨后', part2: '天气晚来秋', title: '山居秋暝', author: '王维', sentence: '空山新雨后', imagery: '秋雨', full: '空山新雨后，天气晚来秋。明月松间照，清泉石上流。' },
+                { id: 3010, part1: '明月松间照', part2: '清泉石上流', title: '山居秋暝', author: '王维', sentence: '明月松间照', imagery: '松泉', full: '空山新雨后，天气晚来秋。明月松间照，清泉石上流。' },
+                { id: 3011, part1: '银烛秋光冷画屏', part2: '轻罗小扇扑流萤', title: '秋夕', author: '杜牧', sentence: '银烛秋光冷画屏', imagery: '秋萤', full: '银烛秋光冷画屏，轻罗小扇扑流萤。天阶夜色凉如水，坐看牵牛织女星。' },
+                { id: 3012, part1: '天阶夜色凉如水', part2: '坐看牵牛织女星', title: '秋夕', author: '杜牧', sentence: '天阶夜色凉如水', imagery: '秋夜', full: '银烛秋光冷画屏，轻罗小扇扑流萤。天阶夜色凉如水，坐看牵牛织女星。' },
+                { id: 3013, part1: '自古逢秋悲寂寥', part2: '我言秋日胜春朝', title: '秋词', author: '刘禹锡', sentence: '自古逢秋悲寂寥', imagery: '秋思', full: '自古逢秋悲寂寥，我言秋日胜春朝。晴空一鹤排云上，便引诗情到碧霄。' },
+                { id: 3014, part1: '晴空一鹤排云上', part2: '便引诗情到碧霄', title: '秋词', author: '刘禹锡', sentence: '晴空一鹤排云上', imagery: '白鹤', full: '自古逢秋悲寂寥，我言秋日胜春朝。晴空一鹤排云上，便引诗情到碧霄。' },
+                { id: 3015, part1: '秋风起兮白云飞', part2: '草木黄落兮雁南归', title: '秋风辞', author: '刘彻', sentence: '秋风起兮白云飞', imagery: '秋风', full: '秋风起兮白云飞，草木黄落兮雁南归。' },
+                { id: 3016, part1: '落霞与孤鹜齐飞', part2: '秋水共长天一色', title: '滕王阁序', author: '王勃', sentence: '落霞与孤鹜齐飞', imagery: '落霞', full: '落霞与孤鹜齐飞，秋水共长天一色。' },
+                { id: 3017, part1: '无边落木萧萧下', part2: '不尽长江滚滚来', title: '登高', author: '杜甫', sentence: '无边落木萧萧下', imagery: '落木', full: '无边落木萧萧下，不尽长江滚滚来。' },
+                { id: 3018, part1: '万里悲秋常作客', part2: '百年多病独登台', title: '登高', author: '杜甫', sentence: '万里悲秋常作客', imagery: '悲秋', full: '万里悲秋常作客，百年多病独登台。' }
+            ],
+            // 冬季主题
+            winter: [
+                { id: 4001, part1: '千山鸟飞绝', part2: '万径人踪灭', title: '江雪', author: '柳宗元', sentence: '千山鸟飞绝', imagery: '寒江', full: '千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。' },
+                { id: 4002, part1: '孤舟蓑笠翁', part2: '独钓寒江雪', title: '江雪', author: '柳宗元', sentence: '孤舟蓑笠翁', imagery: '渔翁', full: '千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。' },
+                { id: 4003, part1: '窗含西岭千秋雪', part2: '门泊东吴万里船', title: '绝句', author: '杜甫', sentence: '窗含西岭千秋雪', imagery: '雪山', full: '两个黄鹂鸣翠柳，一行白鹭上青天。窗含西岭千秋雪，门泊东吴万里船。' },
+                { id: 4004, part1: '白日依山尽', part2: '黄河入海流', title: '登鹳雀楼', author: '王之涣', sentence: '白日依山尽', imagery: '落日', full: '白日依山尽，黄河入海流。欲穷千里目，更上一层楼。' },
+                { id: 4005, part1: '欲穷千里目', part2: '更上一层楼', title: '登鹳雀楼', author: '王之涣', sentence: '欲穷千里目', imagery: '高楼', full: '白日依山尽，黄河入海流。欲穷千里目，更上一层楼。' },
+                { id: 4006, part1: '柴门闻犬吠', part2: '风雪夜归人', title: '逢雪宿芙蓉山主人', author: '刘长卿', sentence: '柴门闻犬吠', imagery: '风雪', full: '日暮苍山远，天寒白屋贫。柴门闻犬吠，风雪夜归人。' },
+                { id: 4007, part1: '日暮苍山远', part2: '天寒白屋贫', title: '逢雪宿芙蓉山主人', author: '刘长卿', sentence: '日暮苍山远', imagery: '暮山', full: '日暮苍山远，天寒白屋贫。柴门闻犬吠，风雪夜归人。' },
+                { id: 4008, part1: '墙角数枝梅', part2: '凌寒独自开', title: '梅花', author: '王安石', sentence: '墙角数枝梅', imagery: '寒梅', full: '墙角数枝梅，凌寒独自开。遥知不是雪，为有暗香来。' },
+                { id: 4009, part1: '遥知不是雪', part2: '为有暗香来', title: '梅花', author: '王安石', sentence: '遥知不是雪', imagery: '暗香', full: '墙角数枝梅，凌寒独自开。遥知不是雪，为有暗香来。' },
+                { id: 4010, part1: '北风卷地白草折', part2: '胡天八月即飞雪', title: '白雪歌送武判官归京', author: '岑参', sentence: '北风卷地白草折', imagery: '飞雪', full: '北风卷地白草折，胡天八月即飞雪。忽如一夜春风来，千树万树梨花开。' },
+                { id: 4011, part1: '忽如一夜春风来', part2: '千树万树梨花开', title: '白雪歌送武判官归京', author: '岑参', sentence: '忽如一夜春风来', imagery: '梨花', full: '北风卷地白草折，胡天八月即飞雪。忽如一夜春风来，千树万树梨花开。' },
+                { id: 4012, part1: '燕山雪花大如席', part2: '片片吹落轩辕台', title: '北风行', author: '李白', sentence: '燕山雪花大如席', imagery: '雪花', full: '燕山雪花大如席，片片吹落轩辕台。' },
+                { id: 4013, part1: '晚来天欲雪', part2: '能饮一杯无', title: '问刘十九', author: '白居易', sentence: '晚来天欲雪', imagery: '暮雪', full: '绿蚁新醅酒，红泥小火炉。晚来天欲雪，能饮一杯无。' },
+                { id: 4014, part1: '绿蚁新醅酒', part2: '红泥小火炉', title: '问刘十九', author: '白居易', sentence: '绿蚁新醅酒', imagery: '酒炉', full: '绿蚁新醅酒，红泥小火炉。晚来天欲雪，能饮一杯无。' },
+                { id: 4015, part1: '梅须逊雪三分白', part2: '雪却输梅一段香', title: '雪梅', author: '卢梅坡', sentence: '梅须逊雪三分白', imagery: '梅雪', full: '梅须逊雪三分白，雪却输梅一段香。' },
+                { id: 4016, part1: '有梅无雪不精神', part2: '有雪无诗俗了人', title: '雪梅', author: '卢梅坡', sentence: '有梅无雪不精神', imagery: '雪梅', full: '有梅无雪不精神，有雪无诗俗了人。' },
+                { id: 4017, part1: '大雪压青松', part2: '青松挺且直', title: '青松', author: '陈毅', sentence: '大雪压青松', imagery: '青松', full: '大雪压青松，青松挺且直。要知松高洁，待到雪化时。' },
+                { id: 4018, part1: '要知松高洁', part2: '待到雪化时', title: '青松', author: '陈毅', sentence: '要知松高洁', imagery: '雪化', full: '大雪压青松，青松挺且直。要知松高洁，待到雪化时。' }
+            ],
+            // 春节主题
+            springFestival: [
+                { id: 5001, part1: '爆竹声中一岁除', part2: '春风送暖入屠苏', title: '元日', author: '王安石', sentence: '爆竹声中一岁除', imagery: '爆竹', full: '爆竹声中一岁除，春风送暖入屠苏。千门万户曈曈日，总把新桃换旧符。' },
+                { id: 5002, part1: '千门万户曈曈日', part2: '总把新桃换旧符', title: '元日', author: '王安石', sentence: '千门万户曈曈日', imagery: '新桃', full: '爆竹声中一岁除，春风送暖入屠苏。千门万户曈曈日，总把新桃换旧符。' },
+                { id: 5003, part1: '故乡今夜思千里', part2: '霜鬓明朝又一年', title: '除夜作', author: '高适', sentence: '故乡今夜思千里', imagery: '思乡', full: '旅馆寒灯独不眠，客心何事转凄然。故乡今夜思千里，霜鬓明朝又一年。' },
+                { id: 5004, part1: '旅馆寒灯独不眠', part2: '客心何事转凄然', title: '除夜作', author: '高适', sentence: '旅馆寒灯独不眠', imagery: '寒灯', full: '旅馆寒灯独不眠，客心何事转凄然。故乡今夜思千里，霜鬓明朝又一年。' },
+                { id: 5005, part1: '明年岂无年', part2: '心事恐蹉跎', title: '守岁', author: '苏轼', sentence: '明年岂无年', imagery: '守岁', full: '明年岂无年，心事恐蹉跎。努力尽今夕，少年犹可夸。' },
+                { id: 5006, part1: '努力尽今夕', part2: '少年犹可夸', title: '守岁', author: '苏轼', sentence: '努力尽今夕', imagery: '少年', full: '明年岂无年，心事恐蹉跎。努力尽今夕，少年犹可夸。' },
+                { id: 5007, part1: '半盏屠苏犹未举', part2: '灯前小草写桃符', title: '除夜雪', author: '陆游', sentence: '半盏屠苏犹未举', imagery: '屠苏', full: '北风吹雪四更初，嘉瑞天教及岁除。半盏屠苏犹未举，灯前小草写桃符。' },
+                { id: 5008, part1: '北风吹雪四更初', part2: '嘉瑞天教及岁除', title: '除夜雪', author: '陆游', sentence: '北风吹雪四更初', imagery: '飞雪', full: '北风吹雪四更初，嘉瑞天教及岁除。半盏屠苏犹未举，灯前小草写桃符。' },
+                { id: 5009, part1: '不求见面惟通谒', part2: '名纸朝来满敝庐', title: '拜年', author: '文征明', sentence: '不求见面惟通谒', imagery: '拜年', full: '不求见面惟通谒，名纸朝来满敝庐。我亦随人投数纸，世情嫌简不嫌虚。' },
+                { id: 5010, part1: '我亦随人投数纸', part2: '世情嫌简不嫌虚', title: '拜年', author: '文征明', sentence: '我亦随人投数纸', imagery: '名纸', full: '不求见面惟通谒，名纸朝来满敝庐。我亦随人投数纸，世情嫌简不嫌虚。' },
+                { id: 5011, part1: '命随年欲尽', part2: '身与世俱忘', title: '除夜', author: '文天祥', sentence: '命随年欲尽', imagery: '除夜', full: '乾坤空落落，岁月去堂堂。命随年欲尽，身与世俱忘。' },
+                { id: 5012, part1: '乾坤空落落', part2: '岁月去堂堂', title: '除夜', author: '文天祥', sentence: '乾坤空落落', imagery: '岁月', full: '乾坤空落落，岁月去堂堂。命随年欲尽，身与世俱忘。' },
+                { id: 5013, part1: '一樽岁酒拜庭除', part2: '稚子牵衣慰屏居', title: '甲午元旦', author: '孔尚任', sentence: '一樽岁酒拜庭除', imagery: '元旦', full: '一樽岁酒拜庭除，稚子牵衣慰屏居。' },
+                { id: 5014, part1: '昨夜斗回北', part2: '今朝岁起东', title: '田家元日', author: '孟浩然', sentence: '昨夜斗回北', imagery: '元日', full: '昨夜斗回北，今朝岁起东。我年已强仕，无禄尚忧农。' },
+                { id: 5015, part1: '续明催画烛', part2: '守岁接长筵', title: '岁除夜会乐城张少府宅', author: '孟浩然', sentence: '续明催画烛', imagery: '画烛', full: '续明催画烛，守岁接长筵。' },
+                { id: 5016, part1: '守岁家家应未卧', part2: '相思那得梦魂来', title: '除夜有怀', author: '孟浩然', sentence: '守岁家家应未卧', imagery: '相思', full: '守岁家家应未卧，相思那得梦魂来。' },
+                { id: 5017, part1: '一年将尽夜', part2: '万里未归人', title: '除夜宿石头驿', author: '戴叔伦', sentence: '一年将尽夜', imagery: '未归', full: '旅馆谁相问，寒灯独可亲。一年将尽夜，万里未归人。' },
+                { id: 5018, part1: '寒灯独可亲', part2: '旅馆谁相问', title: '除夜宿石头驿', author: '戴叔伦', sentence: '寒灯独可亲', imagery: '寒灯', full: '旅馆谁相问，寒灯独可亲。一年将尽夜，万里未归人。' }
+            ],
+            // 中秋主题
+            midAutumn: [
+                { id: 6001, part1: '床前明月光', part2: '疑是地上霜', title: '静夜思', author: '李白', sentence: '床前明月光', imagery: '明月', full: '床前明月光，疑是地上霜。举头望明月，低头思故乡。' },
+                { id: 6002, part1: '举头望明月', part2: '低头思故乡', title: '静夜思', author: '李白', sentence: '举头望明月', imagery: '思乡', full: '床前明月光，疑是地上霜。举头望明月，低头思故乡。' },
+                { id: 6003, part1: '海上生明月', part2: '天涯共此时', title: '望月怀远', author: '张九龄', sentence: '海上生明月', imagery: '海月', full: '海上生明月，天涯共此时。情人怨遥夜，竟夕起相思。' },
+                { id: 6004, part1: '情人怨遥夜', part2: '竟夕起相思', title: '望月怀远', author: '张九龄', sentence: '情人怨遥夜', imagery: '相思', full: '海上生明月，天涯共此时。情人怨遥夜，竟夕起相思。' },
+                { id: 6005, part1: '明月几时有', part2: '把酒问青天', title: '水调歌头', author: '苏轼', sentence: '明月几时有', imagery: '把酒', full: '明月几时有，把酒问青天。不知天上宫阙，今夕是何年。' },
+                { id: 6006, part1: '但愿人长久', part2: '千里共婵娟', title: '水调歌头', author: '苏轼', sentence: '但愿人长久', imagery: '婵娟', full: '人有悲欢离合，月有阴晴圆缺，此事古难全。但愿人长久，千里共婵娟。' },
+                { id: 6007, part1: '人有悲欢离合', part2: '月有阴晴圆缺', title: '水调歌头', author: '苏轼', sentence: '人有悲欢离合', imagery: '悲欢', full: '人有悲欢离合，月有阴晴圆缺，此事古难全。但愿人长久，千里共婵娟。' },
+                { id: 6008, part1: '小时不识月', part2: '呼作白玉盘', title: '古朗月行', author: '李白', sentence: '小时不识月', imagery: '白玉盘', full: '小时不识月，呼作白玉盘。又疑瑶台镜，飞在青云端。' },
+                { id: 6009, part1: '又疑瑶台镜', part2: '飞在青云端', title: '古朗月行', author: '李白', sentence: '又疑瑶台镜', imagery: '瑶台', full: '小时不识月，呼作白玉盘。又疑瑶台镜，飞在青云端。' },
+                { id: 6010, part1: '明月出天山', part2: '苍茫云海间', title: '关山月', author: '李白', sentence: '明月出天山', imagery: '云海', full: '明月出天山，苍茫云海间。长风几万里，吹度玉门关。' },
+                { id: 6011, part1: '长风几万里', part2: '吹度玉门关', title: '关山月', author: '李白', sentence: '长风几万里', imagery: '长风', full: '明月出天山，苍茫云海间。长风几万里，吹度玉门关。' },
+                { id: 6012, part1: '露从今夜白', part2: '月是故乡明', title: '月夜忆舍弟', author: '杜甫', sentence: '露从今夜白', imagery: '月夜', full: '露从今夜白，月是故乡明。有弟皆分散，无家问死生。' },
+                { id: 6013, part1: '今夜月明人尽望', part2: '不知秋思落谁家', title: '十五夜望月', author: '王建', sentence: '今夜月明人尽望', imagery: '秋思', full: '中庭地白树栖鸦，冷露无声湿桂花。今夜月明人尽望，不知秋思落谁家。' },
+                { id: 6014, part1: '中庭地白树栖鸦', part2: '冷露无声湿桂花', title: '十五夜望月', author: '王建', sentence: '中庭地白树栖鸦', imagery: '桂花', full: '中庭地白树栖鸦，冷露无声湿桂花。今夜月明人尽望，不知秋思落谁家。' },
+                { id: 6015, part1: '明月何皎皎', part2: '照我罗床帏', title: '明月何皎皎', author: '佚名', sentence: '明月何皎皎', imagery: '明月', full: '明月何皎皎，照我罗床帏。' },
+                { id: 6016, part1: '此夜若无月', part2: '一年虚过秋', title: '中秋', author: '司空图', sentence: '此夜若无月', imagery: '中秋', full: '闲吟秋景外，万事觉悠悠。此夜若无月，一年虚过秋。' },
+                { id: 6017, part1: '皓魄当空宝镜升', part2: '云间仙籁寂无声', title: '中秋', author: '李朴', sentence: '皓魄当空宝镜升', imagery: '宝镜', full: '皓魄当空宝镜升，云间仙籁寂无声。平分秋色一轮满，长伴云衢千里明。' },
+                { id: 6018, part1: '平分秋色一轮满', part2: '长伴云衢千里明', title: '中秋', author: '李朴', sentence: '平分秋色一轮满', imagery: '秋月', full: '皓魄当空宝镜升，云间仙籁寂无声。平分秋色一轮满，长伴云衢千里明。' }
+            ],
+            // 重阳主题
+            doubleNinth: [
+                { id: 7001, part1: '独在异乡为异客', part2: '每逢佳节倍思亲', title: '九月九日忆山东兄弟', author: '王维', sentence: '独在异乡为异客', imagery: '思亲', full: '独在异乡为异客，每逢佳节倍思亲。遥知兄弟登高处，遍插茱萸少一人。' },
+                { id: 7002, part1: '遥知兄弟登高处', part2: '遍插茱萸少一人', title: '九月九日忆山东兄弟', author: '王维', sentence: '遥知兄弟登高处', imagery: '茱萸', full: '独在异乡为异客，每逢佳节倍思亲。遥知兄弟登高处，遍插茱萸少一人。' },
+                { id: 7003, part1: '待到重阳日', part2: '还来就菊花', title: '过故人庄', author: '孟浩然', sentence: '待到重阳日', imagery: '菊花', full: '故人具鸡黍，邀我至田家。绿树村边合，青山郭外斜。开轩面场圃，把酒话桑麻。待到重阳日，还来就菊花。' },
+                { id: 7004, part1: '开轩面场圃', part2: '把酒话桑麻', title: '过故人庄', author: '孟浩然', sentence: '开轩面场圃', imagery: '桑麻', full: '故人具鸡黍，邀我至田家。绿树村边合，青山郭外斜。开轩面场圃，把酒话桑麻。待到重阳日，还来就菊花。' },
+                { id: 7005, part1: '尘世难逢开口笑', part2: '菊花须插满头归', title: '九日齐山登高', author: '杜牧', sentence: '尘世难逢开口笑', imagery: '登高', full: '江涵秋影雁初飞，与客携壶上翠微。尘世难逢开口笑，菊花须插满头归。' },
+                { id: 7006, part1: '江涵秋影雁初飞', part2: '与客携壶上翠微', title: '九日齐山登高', author: '杜牧', sentence: '江涵秋影雁初飞', imagery: '秋雁', full: '江涵秋影雁初飞，与客携壶上翠微。尘世难逢开口笑，菊花须插满头归。' },
+                { id: 7007, part1: '人生易老天难老', part2: '岁岁重阳', title: '采桑子·重阳', author: '毛泽东', sentence: '人生易老天难老', imagery: '重阳', full: '人生易老天难老，岁岁重阳。今又重阳，战地黄花分外香。' },
+                { id: 7008, part1: '今又重阳', part2: '战地黄花分外香', title: '采桑子·重阳', author: '毛泽东', sentence: '今又重阳', imagery: '黄花', full: '人生易老天难老，岁岁重阳。今又重阳，战地黄花分外香。' },
+                { id: 7009, part1: '佳节又重阳', part2: '玉枕纱厨', title: '醉花阴', author: '李清照', sentence: '佳节又重阳', imagery: '玉枕', full: '佳节又重阳，玉枕纱厨，半夜凉初透。' },
+                { id: 7010, part1: '东篱把酒黄昏后', part2: '有暗香盈袖', title: '醉花阴', author: '李清照', sentence: '东篱把酒黄昏后', imagery: '暗香', full: '东篱把酒黄昏后，有暗香盈袖。莫道不销魂，帘卷西风，人比黄花瘦。' },
+                { id: 7011, part1: '莫道不销魂', part2: '人比黄花瘦', title: '醉花阴', author: '李清照', sentence: '莫道不销魂', imagery: '黄花瘦', full: '东篱把酒黄昏后，有暗香盈袖。莫道不销魂，帘卷西风，人比黄花瘦。' },
+                { id: 7012, part1: '他乡共酌金花酒', part2: '万里同悲鸿雁天', title: '九月九日玄武山旅眺', author: '卢照邻', sentence: '他乡共酌金花酒', imagery: '鸿雁', full: '九月九日眺山川，归心归望积风烟。他乡共酌金花酒，万里同悲鸿雁天。' },
+                { id: 7013, part1: '九月九日眺山川', part2: '归心归望积风烟', title: '九月九日玄武山旅眺', author: '卢照邻', sentence: '九月九日眺山川', imagery: '山川', full: '九月九日眺山川，归心归望积风烟。他乡共酌金花酒，万里同悲鸿雁天。' },
+                { id: 7014, part1: '强欲登高去', part2: '无人送酒来', title: '行军九日思长安故园', author: '岑参', sentence: '强欲登高去', imagery: '送酒', full: '强欲登高去，无人送酒来。遥怜故园菊，应傍战场开。' },
+                { id: 7015, part1: '遥怜故园菊', part2: '应傍战场开', title: '行军九日思长安故园', author: '岑参', sentence: '遥怜故园菊', imagery: '故园菊', full: '强欲登高去，无人送酒来。遥怜故园菊，应傍战场开。' },
+                { id: 7016, part1: '菊花何太苦', part2: '遭此两重阳', title: '九月十日即事', author: '李白', sentence: '菊花何太苦', imagery: '菊花', full: '昨日登高罢，今朝更举觞。菊花何太苦，遭此两重阳。' },
+                { id: 7017, part1: '昨日登高罢', part2: '今朝更举觞', title: '九月十日即事', author: '李白', sentence: '昨日登高罢', imagery: '举觞', full: '昨日登高罢，今朝更举觞。菊花何太苦，遭此两重阳。' },
+                { id: 7018, part1: '又是过重阳', part2: '台榭登临处', title: '谢新恩', author: '李煜', sentence: '又是过重阳', imagery: '登临', full: '又是过重阳，台榭登临处。茱萸香堕，紫菊气，飘庭户。' }
+            ],
+            // 李白专题
+            libai: [
+                { id: 8001, part1: '床前明月光', part2: '疑是地上霜', title: '静夜思', author: '李白', sentence: '床前明月光', imagery: '明月', full: '床前明月光，疑是地上霜。举头望明月，低头思故乡。' },
+                { id: 8002, part1: '举头望明月', part2: '低头思故乡', title: '静夜思', author: '李白', sentence: '举头望明月', imagery: '思乡', full: '床前明月光，疑是地上霜。举头望明月，低头思故乡。' },
+                { id: 8003, part1: '日照香炉生紫烟', part2: '遥看瀑布挂前川', title: '望庐山瀑布', author: '李白', sentence: '日照香炉生紫烟', imagery: '瀑布', full: '日照香炉生紫烟，遥看瀑布挂前川。飞流直下三千尺，疑是银河落九天。' },
+                { id: 8004, part1: '飞流直下三千尺', part2: '疑是银河落九天', title: '望庐山瀑布', author: '李白', sentence: '飞流直下三千尺', imagery: '银河', full: '日照香炉生紫烟，遥看瀑布挂前川。飞流直下三千尺，疑是银河落九天。' },
+                { id: 8005, part1: '朝辞白帝彩云间', part2: '千里江陵一日还', title: '早发白帝城', author: '李白', sentence: '朝辞白帝彩云间', imagery: '江陵', full: '朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。' },
+                { id: 8006, part1: '两岸猿声啼不住', part2: '轻舟已过万重山', title: '早发白帝城', author: '李白', sentence: '两岸猿声啼不住', imagery: '轻舟', full: '朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。' },
+                { id: 8007, part1: '故人西辞黄鹤楼', part2: '烟花三月下扬州', title: '黄鹤楼送孟浩然之广陵', author: '李白', sentence: '故人西辞黄鹤楼', imagery: '烟花', full: '故人西辞黄鹤楼，烟花三月下扬州。孤帆远影碧空尽，唯见长江天际流。' },
+                { id: 8008, part1: '孤帆远影碧空尽', part2: '唯见长江天际流', title: '黄鹤楼送孟浩然之广陵', author: '李白', sentence: '孤帆远影碧空尽', imagery: '长江', full: '故人西辞黄鹤楼，烟花三月下扬州。孤帆远影碧空尽，唯见长江天际流。' },
+                { id: 8009, part1: '天门中断楚江开', part2: '碧水东流至此回', title: '望天门山', author: '李白', sentence: '天门中断楚江开', imagery: '天门', full: '天门中断楚江开，碧水东流至此回。两岸青山相对出，孤帆一片日边来。' },
+                { id: 8010, part1: '两岸青山相对出', part2: '孤帆一片日边来', title: '望天门山', author: '李白', sentence: '两岸青山相对出', imagery: '孤帆', full: '天门中断楚江开，碧水东流至此回。两岸青山相对出，孤帆一片日边来。' },
+                { id: 8011, part1: '李白乘舟将欲行', part2: '忽闻岸上踏歌声', title: '赠汪伦', author: '李白', sentence: '李白乘舟将欲行', imagery: '踏歌', full: '李白乘舟将欲行，忽闻岸上踏歌声。桃花潭水深千尺，不及汪伦送我情。' },
+                { id: 8012, part1: '桃花潭水深千尺', part2: '不及汪伦送我情', title: '赠汪伦', author: '李白', sentence: '桃花潭水深千尺', imagery: '深情', full: '李白乘舟将欲行，忽闻岸上踏歌声。桃花潭水深千尺，不及汪伦送我情。' },
+                { id: 8013, part1: '小时不识月', part2: '呼作白玉盘', title: '古朗月行', author: '李白', sentence: '小时不识月', imagery: '白玉盘', full: '小时不识月，呼作白玉盘。又疑瑶台镜，飞在青云端。' },
+                { id: 8014, part1: '又疑瑶台镜', part2: '飞在青云端', title: '古朗月行', author: '李白', sentence: '又疑瑶台镜', imagery: '瑶台', full: '小时不识月，呼作白玉盘。又疑瑶台镜，飞在青云端。' },
+                { id: 8015, part1: '明月出天山', part2: '苍茫云海间', title: '关山月', author: '李白', sentence: '明月出天山', imagery: '云海', full: '明月出天山，苍茫云海间。长风几万里，吹度玉门关。' },
+                { id: 8016, part1: '长风几万里', part2: '吹度玉门关', title: '关山月', author: '李白', sentence: '长风几万里', imagery: '长风', full: '明月出天山，苍茫云海间。长风几万里，吹度玉门关。' },
+                { id: 8017, part1: '众鸟高飞尽', part2: '孤云独去闲', title: '独坐敬亭山', author: '李白', sentence: '众鸟高飞尽', imagery: '孤云', full: '众鸟高飞尽，孤云独去闲。相看两不厌，只有敬亭山。' },
+                { id: 8018, part1: '相看两不厌', part2: '只有敬亭山', title: '独坐敬亭山', author: '李白', sentence: '相看两不厌', imagery: '敬亭山', full: '众鸟高飞尽，孤云独去闲。相看两不厌，只有敬亭山。' }
+            ],
+            // 杜甫专题
+            dufu: [
+                { id: 9001, part1: '两个黄鹂鸣翠柳', part2: '一行白鹭上青天', title: '绝句', author: '杜甫', sentence: '两个黄鹂鸣翠柳', imagery: '黄鹂', full: '两个黄鹂鸣翠柳，一行白鹭上青天。窗含西岭千秋雪，门泊东吴万里船。' },
+                { id: 9002, part1: '窗含西岭千秋雪', part2: '门泊东吴万里船', title: '绝句', author: '杜甫', sentence: '窗含西岭千秋雪', imagery: '雪山', full: '两个黄鹂鸣翠柳，一行白鹭上青天。窗含西岭千秋雪，门泊东吴万里船。' },
+                { id: 9003, part1: '国破山河在', part2: '城春草木深', title: '春望', author: '杜甫', sentence: '国破山河在', imagery: '春望', full: '国破山河在，城春草木深。感时花溅泪，恨别鸟惊心。' },
+                { id: 9004, part1: '感时花溅泪', part2: '恨别鸟惊心', title: '春望', author: '杜甫', sentence: '感时花溅泪', imagery: '花泪', full: '国破山河在，城春草木深。感时花溅泪，恨别鸟惊心。' },
+                { id: 9005, part1: '好雨知时节', part2: '当春乃发生', title: '春夜喜雨', author: '杜甫', sentence: '好雨知时节', imagery: '春雨', full: '好雨知时节，当春乃发生。随风潜入夜，润物细无声。' },
+                { id: 9006, part1: '随风潜入夜', part2: '润物细无声', title: '春夜喜雨', author: '杜甫', sentence: '随风潜入夜', imagery: '细雨', full: '好雨知时节，当春乃发生。随风潜入夜，润物细无声。' },
+                { id: 9007, part1: '迟日江山丽', part2: '春风花草香', title: '绝句二首', author: '杜甫', sentence: '迟日江山丽', imagery: '春光', full: '迟日江山丽，春风花草香。泥融飞燕子，沙暖睡鸳鸯。' },
+                { id: 9008, part1: '泥融飞燕子', part2: '沙暖睡鸳鸯', title: '绝句二首', author: '杜甫', sentence: '泥融飞燕子', imagery: '燕子', full: '迟日江山丽，春风花草香。泥融飞燕子，沙暖睡鸳鸯。' },
+                { id: 9009, part1: '露从今夜白', part2: '月是故乡明', title: '月夜忆舍弟', author: '杜甫', sentence: '露从今夜白', imagery: '月夜', full: '露从今夜白，月是故乡明。有弟皆分散，无家问死生。' },
+                { id: 9010, part1: '有弟皆分散', part2: '无家问死生', title: '月夜忆舍弟', author: '杜甫', sentence: '有弟皆分散', imagery: '分散', full: '露从今夜白，月是故乡明。有弟皆分散，无家问死生。' },
+                { id: 9011, part1: '无边落木萧萧下', part2: '不尽长江滚滚来', title: '登高', author: '杜甫', sentence: '无边落木萧萧下', imagery: '落木', full: '无边落木萧萧下，不尽长江滚滚来。' },
+                { id: 9012, part1: '万里悲秋常作客', part2: '百年多病独登台', title: '登高', author: '杜甫', sentence: '万里悲秋常作客', imagery: '悲秋', full: '万里悲秋常作客，百年多病独登台。' },
+                { id: 9013, part1: '会当凌绝顶', part2: '一览众山小', title: '望岳', author: '杜甫', sentence: '会当凌绝顶', imagery: '众山', full: '岱宗夫如何？齐鲁青未了。造化钟神秀，阴阳割昏晓。荡胸生层云，决眦入归鸟。会当凌绝顶，一览众山小。' },
+                { id: 9014, part1: '荡胸生层云', part2: '决眦入归鸟', title: '望岳', author: '杜甫', sentence: '荡胸生层云', imagery: '层云', full: '岱宗夫如何？齐鲁青未了。造化钟神秀，阴阳割昏晓。荡胸生层云，决眦入归鸟。会当凌绝顶，一览众山小。' },
+                { id: 9015, part1: '朱门酒肉臭', part2: '路有冻死骨', title: '自京赴奉先县咏怀五百字', author: '杜甫', sentence: '朱门酒肉臭', imagery: '冻死骨', full: '朱门酒肉臭，路有冻死骨。' },
+                { id: 9016, part1: '星垂平野阔', part2: '月涌大江流', title: '旅夜书怀', author: '杜甫', sentence: '星垂平野阔', imagery: '大江', full: '星垂平野阔，月涌大江流。名岂文章著，官应老病休。' },
+                { id: 9017, part1: '名岂文章著', part2: '官应老病休', title: '旅夜书怀', author: '杜甫', sentence: '名岂文章著', imagery: '文章', full: '星垂平野阔，月涌大江流。名岂文章著，官应老病休。' },
+                { id: 9018, part1: '清江一曲抱村流', part2: '长夏江村事事幽', title: '江村', author: '杜甫', sentence: '清江一曲抱村流', imagery: '江村', full: '清江一曲抱村流，长夏江村事事幽。自去自来梁上燕，相亲相近水中鸥。' }
+            ]
+        };
+
+        // ==================== 自定义题库数据 ====================
+        let CUSTOM_POETRY = {
+            mode1: [], // 上下句配对
+            mode2: [], // 诗名作者配对
+            mode3: []  // 诗句意象配对
+        };
+
+        // 从localStorage加载自定义题库
+        function loadCustomPoetry() {
+            try {
+                const saved = localStorage.getItem('customPoetry');
+                if (saved) {
+                    CUSTOM_POETRY = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.log('加载自定义题库失败');
+            }
+            updateCustomList();
+        }
+
+        // 保存自定义题库到localStorage
+        function saveCustomPoetry() {
+            try {
+                localStorage.setItem('customPoetry', JSON.stringify(CUSTOM_POETRY));
+            } catch (e) {
+                console.log('保存自定义题库失败');
+            }
+        }
+
+        // 添加自定义题目
+        function addCustomPoetry() {
+            const mode = parseInt(document.getElementById('customModeSelect').value);
+            let item = { id: Date.now() };
+
+            if (mode === 1) {
+                const part1 = document.getElementById('customPart1').value.trim();
+                const part2 = document.getElementById('customPart2').value.trim();
+                const title = document.getElementById('customTitle').value.trim();
+
+                if (!part1 || !part2) {
+                    alert('请填写上句和下句');
+                    return;
+                }
+
+                item.part1 = part1;
+                item.part2 = part2;
+                item.title = title || '未命名';
+                item.author = '自定义';
+                item.full = `${part1}，${part2}。`;
+
+                CUSTOM_POETRY.mode1.push(item);
+
+                document.getElementById('customPart1').value = '';
+                document.getElementById('customPart2').value = '';
+                document.getElementById('customTitle').value = '';
+
+            } else if (mode === 2) {
+                const poemTitle = document.getElementById('customPoemTitle').value.trim();
+                const author = document.getElementById('customAuthor').value.trim();
+
+                if (!poemTitle || !author) {
+                    alert('请填写诗名和作者');
+                    return;
+                }
+
+                item.title = poemTitle;
+                item.author = author;
+                item.full = `${poemTitle} - ${author}`;
+
+                CUSTOM_POETRY.mode2.push(item);
+
+                document.getElementById('customPoemTitle').value = '';
+                document.getElementById('customAuthor').value = '';
+
+            } else if (mode === 3) {
+                const sentence = document.getElementById('customSentence').value.trim();
+                const imagery = document.getElementById('customImagery').value.trim();
+
+                if (!sentence || !imagery) {
+                    alert('请填写诗句和意象');
+                    return;
+                }
+
+                item.sentence = sentence;
+                item.imagery = imagery;
+                item.full = `${sentence} → ${imagery}`;
+
+                CUSTOM_POETRY.mode3.push(item);
+
+                document.getElementById('customSentence').value = '';
+                document.getElementById('customImagery').value = '';
+            }
+
+            saveCustomPoetry();
+            updateCustomList();
+        }
+
+        // 更新自定义题目列表显示
+        function updateCustomList() {
+            const mode = parseInt(document.getElementById('customModeSelect').value);
+            const list = mode === 1 ? CUSTOM_POETRY.mode1 :
+                         mode === 2 ? CUSTOM_POETRY.mode2 :
+                         CUSTOM_POETRY.mode3;
+
+            document.getElementById('customCount').textContent = list.length;
+
+            const listEl = document.getElementById('customList');
+            listEl.innerHTML = '';
+
+            list.forEach((item, index) => {
+                let content = '';
+                if (mode === 1) {
+                    content = `${item.part1} ↔ ${item.part2} <span style="color:#888;">(${item.title})</span>`;
+                } else if (mode === 2) {
+                    content = `${item.title} ↔ ${item.author}`;
+                } else {
+                    content = `${item.sentence} ↔ ${item.imagery}`;
+                }
+
+                const div = document.createElement('div');
+                div.className = 'custom-item';
+                div.innerHTML = `
+                    <span>${content}</span>
+                    <button onclick="removeCustomItem(${index})" style="background: #e94560; border: none; color: white; padding: 2px 8px; border-radius: 3px; cursor: pointer; margin-left: 10px;">删除</button>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+
+        // 删除自定义题目
+        function removeCustomItem(index) {
+            const mode = parseInt(document.getElementById('customModeSelect').value);
+            if (mode === 1) {
+                CUSTOM_POETRY.mode1.splice(index, 1);
+            } else if (mode === 2) {
+                CUSTOM_POETRY.mode2.splice(index, 1);
+            } else {
+                CUSTOM_POETRY.mode3.splice(index, 1);
+            }
+            saveCustomPoetry();
+            updateCustomList();
+        }
+
+        // 清空自定义题库
+        function clearCustomPoetry() {
+            if (confirm('确定要清空所有自定义题目吗？')) {
+                CUSTOM_POETRY = { mode1: [], mode2: [], mode3: [] };
+                saveCustomPoetry();
+                updateCustomList();
+            }
+        }
+
+        // 根据模式切换输入区域显示
+        function switchCustomMode(mode) {
+            document.getElementById('mode1Inputs').style.display = mode === 1 ? 'block' : 'none';
+            document.getElementById('mode2Inputs').style.display = mode === 2 ? 'block' : 'none';
+            document.getElementById('mode3Inputs').style.display = mode === 3 ? 'block' : 'none';
+            updateCustomList();
+        }
+
+        // ==================== 玩家数据与统计 ====================
+        let playerData = {
+            name: '诗词爱好者',
+            avatar: '🙂',
+            totalGames: 0,
+            wins: 0,
+            totalTime: 0,  // 累计成功通关时间（秒）
+            achievements: []
+        };
+
+        // 成就系统
+        const ACHIEVEMENTS = [
+            { id: 'newbie', name: '初出茅庐', desc: '完成第一次闯关', icon: '🌱', requirement: 1 },
+            { id: 'beginner', name: '小试牛刀', desc: '累计成功10次', icon: '🌿', requirement: 10 },
+            { id: 'skilled', name: '熟能生巧', desc: '累计成功50次', icon: '🌳', requirement: 50 },
+            { id: 'master', name: '诗词大师', desc: '累计成功100次', icon: '🏆', requirement: 100 },
+            { id: 'legend', name: '诗词传奇', desc: '累计成功500次', icon: '👑', requirement: 500 }
+        ];
+
+        // 加载玩家数据
+        function loadPlayerData() {
+            try {
+                const saved = localStorage.getItem('poetryLinkPlayerData');
+                if (saved) {
+                    playerData = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.log('加载玩家数据失败');
+            }
+        }
+
+        // 保存玩家数据
+        function savePlayerData() {
+            try {
+                localStorage.setItem('poetryLinkPlayerData', JSON.stringify(playerData));
+            } catch (e) {
+                console.log('保存玩家数据失败');
+            }
+        }
+
+        // 获取当前成就
+        function getCurrentAchievement() {
+            let current = ACHIEVEMENTS[0];
+            for (const ach of ACHIEVEMENTS) {
+                if (playerData.wins >= ach.requirement) {
+                    current = ach;
+                }
+            }
+            return current;
+        }
+
+        // 更新主页显示
+        function updateProfileDisplay() {
+            document.getElementById('profileName').value = playerData.name;
+            document.getElementById('profileAvatar').textContent = playerData.avatar;
+            document.getElementById('statTotalGames').textContent = playerData.totalGames;
+            document.getElementById('statWins').textContent = playerData.wins;
+
+            const winRate = playerData.totalGames > 0 ? Math.round(playerData.wins / playerData.totalGames * 100) : 0;
+            document.getElementById('statWinRate').textContent = winRate + '%';
+
+            if (playerData.wins > 0) {
+                const avgTime = Math.round(playerData.totalTime / playerData.wins);
+                const mins = Math.floor(avgTime / 60);
+                const secs = avgTime % 60;
+                document.getElementById('statAvgTime').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            // 更新成就称号
+            const ach = getCurrentAchievement();
+            document.getElementById('achievementBadge').textContent = `${ach.icon} ${ach.name}`;
+        }
+
+        // ==================== 班级系统（后端API版） ====================
+        const API_URL = 'http://localhost:3000';
+        let ws = null;
+        let classData = {
+            className: '',
+            classCode: '',
+            members: []
+        };
+        let pkCallback = null;
+
+        // 连接WebSocket
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) return;
+
+            ws = new WebSocket('ws://localhost:3000');
+
+            ws.onopen = () => {
+                console.log('WebSocket已连接');
+                if (classData.classCode) {
+                    ws.send(JSON.stringify({
+                        type: 'register',
+                        playerName: playerData.name,
+                        classCode: classData.classCode
+                    }));
+                }
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket已断开');
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (err) => {
+                console.error('WebSocket错误:', err);
+            };
+        }
+
+        // 处理WebSocket消息
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'pk_invite':
+                    if (confirm(`${data.from} 向你发起PK挑战！`)) {
+                        ws.send(JSON.stringify({
+                            type: 'pk_accept',
+                            inviterName: data.from
+                        }));
+                        showPKModal();
+                    } else {
+                        ws.send(JSON.stringify({
+                            type: 'cancel_pk',
+                            opponentName: data.from
+                        }));
+                    }
+                    break;
+
+                case 'pk_sent':
+                    document.getElementById('pkOpponent').textContent = `${data.opponent || '对方'} 正在接受...`;
+                    break;
+
+                case 'pk_accepted':
+                    showPKModal();
+                    break;
+
+                case 'pk_result':
+                    document.getElementById('pkWaiting').style.display = 'none';
+                    document.getElementById('pkResult').style.display = 'block';
+                    document.getElementById('pkMyScore').textContent = data.myScore;
+                    document.getElementById('pkOpponentScore').textContent = data.opponentScore;
+                    if (data.winner === 'win') {
+                        document.getElementById('pkResultEmoji').textContent = '🏆';
+                        document.getElementById('pkResultText').textContent = '你赢了！';
+                    } else if (data.winner === 'lose') {
+                        document.getElementById('pkResultEmoji').textContent = '😢';
+                        document.getElementById('pkResultText').textContent = '你输了！';
+                    } else {
+                        document.getElementById('pkResultEmoji').textContent = '🤝';
+                        document.getElementById('pkResultText').textContent = '平局！';
+                    }
+                    break;
+
+                case 'pk_cancelled':
+                    document.getElementById('pkModal').classList.remove('show');
+                    alert('对方取消了PK邀请');
+                    break;
+
+                case 'pk_error':
+                    alert(data.message);
+                    break;
+            }
+        }
+
+        // 显示PK弹窗
+        function showPKModal() {
+            document.getElementById('pkModal').classList.add('show');
+            document.getElementById('pkWaiting').style.display = 'block';
+            document.getElementById('pkResult').style.display = 'none';
+        }
+
+        // API请求
+        async function apiRequest(endpoint, method, body) {
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                return await response.json();
+            } catch (e) {
+                console.error('API请求失败:', e);
+                return { error: '网络错误，请检查服务器是否启动' };
+            }
+        }
+
+        // 加载班级数据
+        function loadClassData() {
+            const saved = localStorage.getItem('poetryLinkClassData');
+            if (saved) {
+                classData = JSON.parse(saved);
+            }
+        }
+
+        // 保存班级数据
+        function saveClassData() {
+            localStorage.setItem('poetryLinkClassData', JSON.stringify(classData));
+        }
+
+        // 生成四位班级号
+        function generateClassCode() {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        // Tab切换
+        function switchClassTab(tab) {
+            document.getElementById('tabCreate').className = 'btn ' + (tab === 'create' ? 'btn-primary' : 'btn-secondary');
+            document.getElementById('tabJoin').className = 'btn ' + (tab === 'join' ? 'btn-primary' : 'btn-secondary');
+            document.getElementById('tabMembers').className = 'btn ' + (tab === 'members' ? 'btn-primary' : 'btn-secondary');
+
+            document.getElementById('createClassArea').style.display = tab === 'create' ? 'block' : 'none';
+            document.getElementById('joinClassArea').style.display = tab === 'join' ? 'block' : 'none';
+            document.getElementById('classMembersArea').style.display = tab === 'members' ? 'block' : 'none';
+
+            if (tab === 'members') {
+                updateMembersList();
+            }
+        }
+
+        // 更新班级成员列表
+        async function updateMembersList() {
+            document.getElementById('myClassName').textContent = classData.className || '尚未加入班级';
+            document.getElementById('myClassCode').textContent = classData.classCode || '--';
+
+            const leaveBtn = document.getElementById('leaveClassBtn');
+            leaveBtn.style.display = classData.classCode ? 'block' : 'none';
+
+            const list = document.getElementById('membersList');
+            list.innerHTML = '<p style="text-align: center; color: #888;">加载中...</p>';
+
+            if (!classData.classCode) {
+                list.innerHTML = '<p style="text-align: center; color: #888;">你还没有加入班级</p>';
+                return;
+            }
+
+            const result = await apiRequest(`/api/classes/${classData.classCode}/members`, 'GET');
+
+            if (result.error) {
+                list.innerHTML = `<p style="text-align: center; color: #e94560;">${result.error}</p>`;
+                return;
+            }
+
+            classData.members = result.data;
+            saveClassData();
+
+            if (result.data.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #888;">暂无成员</p>';
+                return;
+            }
+
+            list.innerHTML = '';
+            result.data.forEach(member => {
+                const div = document.createElement('div');
+                div.className = 'custom-item';
+                div.style.cssText = 'justify-content: space-between;';
+                const isMe = member.name === playerData.name;
+                div.innerHTML = `
+                    <span>${member.avatar || '🙂'} ${member.name}${isMe ? ' (我)' : ''}${member.isHost ? ' 👑' : ''}</span>
+                    <div>
+                        <span style="color: #4ecdc4;">胜${member.wins}次</span>
+                        ${!isMe ? `<button onclick="inviteToPK('${member.name}')" class="btn btn-primary" style="padding: 5px 10px; margin-left: 10px; font-size: 0.8rem;">PK</button>` : ''}
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // 创建班级
+        async function createClass() {
+            const name = document.getElementById('className').value.trim();
+            if (!name) {
+                alert('请输入班级名称');
+                return;
+            }
+
+            const result = await apiRequest('/api/classes', 'POST', {
+                className: name,
+                hostName: playerData.name,
+                hostAvatar: playerData.avatar
+            });
+
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+
+            classData.classCode = result.data.code;
+            classData.className = result.data.className;
+            classData.members = result.data.members;
+            saveClassData();
+
+            // 连接WebSocket
+            connectWebSocket();
+
+            updateMembersList();
+            alert(`班级创建成功！\n班级号：${classData.classCode}\n请将班级号分享给同学`);
+            document.getElementById('className').value = '';
+            document.getElementById('newClassCode').value = classData.classCode;
+        }
+
+        // 加入班级
+        async function joinClass() {
+            const code = document.getElementById('joinClassCode').value.trim();
+            if (code.length !== 4) {
+                alert('请输入正确的四位班级号');
+                return;
+            }
+
+            const result = await apiRequest('/api/classes/join', 'POST', {
+                code,
+                playerName: playerData.name,
+                playerAvatar: playerData.avatar
+            });
+
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+
+            classData.classCode = result.data.code;
+            classData.className = result.data.className;
+            classData.members = result.data.members;
+            saveClassData();
+
+            // 连接WebSocket
+            connectWebSocket();
+
+            updateMembersList();
+            alert('加入班级成功！');
+            switchClassTab('members');
+        }
+
+        // 退出班级
+        async function leaveClass() {
+            if (!confirm('确定要退出班级吗？')) return;
+
+            const result = await apiRequest('/api/classes/leave', 'POST', {
+                code: classData.classCode,
+                playerName: playerData.name
+            });
+
+            classData = { className: '', classCode: '', members: [] };
+            saveClassData();
+
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+
+            updateMembersList();
+            alert('已退出班级');
+        }
+
+        // 邀请PK
+        function inviteToPK(opponentName) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('无法连接服务器，请刷新页面重试');
+                return;
+            }
+
+            document.getElementById('pkModal').classList.add('show');
+            document.getElementById('pkWaiting').style.display = 'block';
+            document.getElementById('pkResult').style.display = 'none';
+            document.getElementById('pkOpponent').textContent = `正在邀请 ${opponentName}...`;
+
+            ws.send(JSON.stringify({
+                type: 'pk_invite',
+                opponentName: opponentName,
+                fromAvatar: playerData.avatar
+            }));
+
+            // 30秒超时
+            setTimeout(() => {
+                if (document.getElementById('pkWaiting').style.display !== 'none') {
+                    document.getElementById('pkModal').classList.remove('show');
+                    alert('对方未响应，PK邀请已取消');
+                }
+            }, 30000);
+        }
+
+        // ==================== 游戏状态 ====================
+        let gameState = {
+            mode: 1, // 1: 上下句, 2: 诗名作者, 3: 诗句意象
+            theme: 'all', // 当前主题
+            score: 0,
+            level: 1,
+            highScore: 0,
+            blocks: [],
+            rows: 6,
+            cols: 6,
+            selectedBlock: null,
+            isGameOver: false,
+            bgmEnabled: true,
+            sfxEnabled: true,
+            audioContext: null,
+            bgmOscillator: null,
+            bgmGain: null,
+            // 倒计时相关
+            timeRemaining: 180, // 3分钟 = 180秒
+            timerInterval: null,
+            isPaused: false,
+            timerPausedAt: 0 // 暂停时剩余时间
+        };
+
+        // ==================== 音频系统 ====================
+        function initAudio() {
+            if (!gameState.audioContext) {
+                gameState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!gameState.sfxEnabled) return;
+            initAudio();
+            
+            const ctx = gameState.audioContext;
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            switch(type) {
+                case 'click':
+                    oscillator.frequency.setValueAtTime(600, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.1);
+                    break;
+                case 'match':
+                    oscillator.frequency.setValueAtTime(523, ctx.currentTime);
+                    oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+                    oscillator.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.3);
+                    break;
+                case 'error':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(200, ctx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                    oscillator.start(ctx.currentTime);
+                    oscillator.stop(ctx.currentTime + 0.2);
+                    break;
+                case 'win':
+                    const notes = [523, 659, 784, 1047];
+                    notes.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+                        gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.3);
+                        osc.start(ctx.currentTime + i * 0.15);
+                        osc.stop(ctx.currentTime + i * 0.15 + 0.3);
+                    });
+                    break;
+            }
+        }
+
+        function startBGM() {
+            if (!gameState.bgmEnabled) return;
+            initAudio();
+            
+            if (gameState.bgmOscillator) return;
+            
+            const ctx = gameState.audioContext;
+            gameState.bgmGain = ctx.createGain();
+            gameState.bgmGain.gain.setValueAtTime(0.05, ctx.currentTime);
+            gameState.bgmGain.connect(ctx.destination);
+            
+            // 古风五声音阶旋律
+            const melody = [261, 293, 329, 392, 440, 523, 587, 659];
+            let noteIndex = 0;
+            
+            function playNote() {
+                if (!gameState.bgmEnabled || !gameState.bgmGain) return;
+                
+                const osc = ctx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(melody[noteIndex % melody.length], ctx.currentTime);
+                osc.connect(gameState.bgmGain);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.5);
+                
+                noteIndex++;
+                setTimeout(playNote, 600);
+            }
+            
+            playNote();
+        }
+
+        function stopBGM() {
+            if (gameState.bgmGain) {
+                gameState.bgmGain.disconnect();
+                gameState.bgmGain = null;
+            }
+        }
+
+        function toggleBGM() {
+            gameState.bgmEnabled = !gameState.bgmEnabled;
+            document.getElementById('bgmBtn').classList.toggle('active', gameState.bgmEnabled);
+            if (gameState.bgmEnabled) {
+                startBGM();
+            } else {
+                stopBGM();
+            }
+        }
+
+        function toggleSFX() {
+            gameState.sfxEnabled = !gameState.sfxEnabled;
+            document.getElementById('sfxBtn').classList.toggle('active', gameState.sfxEnabled);
+        }
+
+        // ==================== 烟花特效 ====================
+        function createFirework(x, y) {
+            const colors = ['#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E8BAFF', '#FFB3E6'];
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            firework.style.left = x + 'px';
+            firework.style.top = y + 'px';
+            document.body.appendChild(firework);
+            
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                const angle = (Math.PI * 2 / 20) * i;
+                const distance = 50 + Math.random() * 50;
+                particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+                particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
+                
+                firework.appendChild(particle);
+            }
+            
+            setTimeout(() => firework.remove(), 1000);
+        }
+
+        function celebrateWin() {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight * 0.5;
+                    createFirework(x, y);
+                }, i * 300);
+            }
+        }
+
+        // ==================== 倒计时系统 ====================
+        function startTimer() {
+            stopTimer();
+            gameState.timeRemaining = 180; // 3分钟
+            gameState.isPaused = false;
+            
+            updateTimerDisplay();
+            
+            gameState.timerInterval = setInterval(() => {
+                if (gameState.isPaused) return;
+                
+                gameState.timeRemaining--;
+                updateTimerDisplay();
+                
+                if (gameState.timeRemaining <= 0) {
+                    // 时间耗尽，游戏失败
+                    stopTimer();
+                    gameState.isGameOver = true;
+                    showGameOver(false, '时间耗尽，游戏失败！');
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+        }
+
+        function pauseTimer() {
+            gameState.isPaused = true;
+            gameState.timerPausedAt = gameState.timeRemaining;
+        }
+
+        function resumeTimer() {
+            if (gameState.isPaused) {
+                gameState.isPaused = false;
+            }
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameState.timeRemaining / 60);
+            const seconds = gameState.timeRemaining % 60;
+            const timerEl = document.getElementById('timer');
+            timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // 剩余少于30秒时显示警告
+            if (gameState.timeRemaining <= 30) {
+                timerEl.classList.add('warning');
+            } else {
+                timerEl.classList.remove('warning');
+            }
+        }
+
+        // ==================== 游戏逻辑 ====================
+        function isMobile() {
+            return window.innerWidth <= 500;
+        }
+
+        function getGridSize() {
+            return isMobile() ? CONFIG.mobileGrid : CONFIG.pcGrid;
+        }
+
+        function generateBlocks() {
+            const grid = getGridSize();
+            gameState.rows = grid.rows;
+            gameState.cols = grid.cols;
+            
+            const totalBlocks = gameState.rows * gameState.cols;
+            const pairCount = Math.floor(totalBlocks / 2);
+            
+            // 根据主题和模式选择数据源
+            let dataSource;
+
+            if (gameState.theme === 'custom') {
+                // 自定义主题
+                const customData = gameState.mode === 1 ? CUSTOM_POETRY.mode1 :
+                                   gameState.mode === 2 ? CUSTOM_POETRY.mode2 :
+                                   CUSTOM_POETRY.mode3;
+                if (customData.length > 0) {
+                    dataSource = customData;
+                } else {
+                    alert('自定义题库为空，请先添加题目！');
+                    return;
+                }
+            } else if (gameState.theme !== 'all' && THEME_POETRY[gameState.theme]) {
+                // 使用主题数据
+                if (gameState.mode === 3 && THEME_IMAGERY[gameState.theme]) {
+                    // 诗句意象配对模式使用专门的意象数据库
+                    dataSource = THEME_IMAGERY[gameState.theme];
+                } else {
+                    dataSource = THEME_POETRY[gameState.theme];
+                }
+            } else {
+                // 使用默认数据
+                switch(gameState.mode) {
+                    case 1: dataSource = POETRY_SENTENCES; break;
+                    case 2: dataSource = POETRY_AUTHORS; break;
+                    case 3: dataSource = POETRY_IMAGERY; break;
+                }
+            }
+            
+            // 随机选择配对
+            const shuffled = [...dataSource].sort(() => Math.random() - 0.5);
+            const selectedPairs = shuffled.slice(0, pairCount);
+            
+            // 创建方块
+            let blocks = [];
+            selectedPairs.forEach((pair, index) => {
+                const colorClass = (index % CONFIG.colors) + 1;
+                
+                // 根据当前模式选择配对内容
+                if (gameState.mode === 1) {
+                    // 上下句配对
+                    const content1 = pair.part1 || pair.sentence;
+                    const content2 = pair.part2 || pair.imagery;
+                    blocks.push({ id: pair.id, content: content1, pairId: pair.id, color: colorClass, info: pair });
+                    blocks.push({ id: pair.id, content: content2, pairId: pair.id, color: colorClass, info: pair });
+                } else if (gameState.mode === 2) {
+                    // 诗名作者配对
+                    blocks.push({ id: pair.id, content: pair.title, pairId: pair.id, color: colorClass, info: pair });
+                    blocks.push({ id: pair.id, content: pair.author, pairId: pair.id, color: colorClass, info: pair });
+                } else {
+                    // 诗句意象配对
+                    const sentence = pair.part1 || pair.sentence;
+                    const imagery = pair.part2 || pair.imagery || pair.title;
+                    blocks.push({ id: pair.id, content: sentence, pairId: pair.id, color: colorClass, info: pair });
+                    blocks.push({ id: pair.id, content: imagery, pairId: pair.id, color: colorClass, info: pair });
+                }
+            });
+            
+            // 如果有奇数个方块，移除最后一个
+            if (blocks.length > totalBlocks) {
+                blocks = blocks.slice(0, totalBlocks);
+            }
+            
+            // 打乱顺序
+            blocks.sort(() => Math.random() - 0.5);
+            
+            // 分配位置
+            gameState.blocks = blocks.map((block, index) => ({
+                ...block,
+                row: Math.floor(index / gameState.cols),
+                col: index % gameState.cols,
+                visible: true
+            }));
+            
+            // 确保有解
+            ensureSolvable();
+        }
+
+        function ensureSolvable() {
+            let attempts = 0;
+            const maxAttempts = 200;
+            
+            while (!hasValidMoves() && attempts < maxAttempts) {
+                attempts++;
+                // 打乱位置
+                const positions = gameState.blocks.map(b => ({ row: b.row, col: b.col }));
+                positions.sort(() => Math.random() - 0.5);
+                gameState.blocks.forEach((block, i) => {
+                    block.row = positions[i].row;
+                    block.col = positions[i].col;
+                });
+            }
+            
+            // 如果仍然无解，强制放置一对在边缘位置（必定可连）
+            if (!hasValidMoves()) {
+                forceGenerateSolvableBoard();
+            }
+        }
+
+        // 强制生成有解棋盘 - 将一对配对放在边缘（只有一边需要绕）
+        function forceGenerateSolvableBoard() {
+            // 找出所有配对组
+            const pairGroups = {};
+            gameState.blocks.forEach(block => {
+                if (!pairGroups[block.pairId]) {
+                    pairGroups[block.pairId] = [];
+                }
+                pairGroups[block.pairId].push(block);
+            });
+            
+            // 随机选择一对
+            const pairIds = Object.keys(pairGroups);
+            const randomPairId = pairIds[Math.floor(Math.random() * pairIds.length)];
+            const pair = pairGroups[randomPairId];
+            
+            if (pair.length >= 2) {
+                // 将这对放在棋盘最上行，相邻位置
+                pair[0].row = 0;
+                pair[0].col = 0;
+                pair[1].row = 0;
+                pair[1].col = 1;
+                
+                // 清除这对周围可能的遮挡（确保直接相连）
+                gameState.blocks.forEach(block => {
+                    if (block.pairId === randomPairId) return;
+                    // 如果在其他位置，不需要处理，BFS会绕过
+                });
+            }
+            
+            // 再次验证
+            if (!hasValidMoves()) {
+                // 最后的兜底：清空这对周围的所有方块
+                const pair = gameState.blocks.filter(b => b.pairId === randomPairId);
+                if (pair.length >= 2) {
+                    // 移除这对周围的所有方块，让出连接通道
+                    gameState.blocks.forEach(block => {
+                        if (block.pairId === randomPairId) return;
+                        // 清空第一行前4列（为连接让出通道）
+                        if (block.row === 0 && block.col <= 3) {
+                            block.visible = false;
+                        }
+                    });
+                }
+            }
+        }
+
+        function hasValidMoves() {
+            const visibleBlocks = gameState.blocks.filter(b => b.visible);
+            
+            for (let i = 0; i < visibleBlocks.length; i++) {
+                for (let j = i + 1; j < visibleBlocks.length; j++) {
+                    if (visibleBlocks[i].pairId === visibleBlocks[j].pairId) {
+                        if (canConnect(visibleBlocks[i], visibleBlocks[j])) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function canConnect(block1, block2) {
+            // 如果两个方块相邻，直接可连
+            const rowDiff = Math.abs(block1.row - block2.row);
+            const colDiff = Math.abs(block1.col - block2.col);
+            if ((rowDiff === 0 && colDiff === 1) || (rowDiff === 1 && colDiff === 0)) {
+                return true;
+            }
+            
+            // BFS路径查找，限制拐角次数
+            const visited = new Set();
+            const queue = [{ row: block1.row, col: block1.col, corners: 0, direction: null }];
+            
+            const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                const key = `${current.row},${current.col},${current.corners},${current.direction}`;
+                
+                if (visited.has(key)) continue;
+                visited.add(key);
+                
+                if (current.row === block2.row && current.col === block2.col) {
+                    return true;
+                }
+                
+                if (current.corners > CONFIG.maxCorners) continue;
+                
+                for (const [dr, dc] of directions) {
+                    const newRow = current.row + dr;
+                    const newCol = current.col + dc;
+                    const newDir = `${dr},${dc}`;
+                    
+                    // 允许走出棋盘边界（绕过边缘）
+                    if (newRow < -1 || newRow > gameState.rows || 
+                        newCol < -1 || newCol > gameState.cols) continue;
+                    
+                    // 检查目标位置是否是block2
+                    if (newRow === block2.row && newCol === block2.col) {
+                        queue.push({ row: newRow, col: newCol, corners: current.corners, direction: newDir });
+                        continue;
+                    }
+                    
+                    // 检查是否为空格子（可见的方块不能通过）
+                    const isOccupied = gameState.blocks.some(b => 
+                        b.row === newRow && b.col === newCol && b.visible
+                    );
+                    
+                    if (isOccupied) continue;
+                    
+                    // 计算拐角
+                    let newCorners = current.corners;
+                    if (current.direction !== null && current.direction !== newDir) {
+                        newCorners++;
+                    }
+                    
+                    if (newCorners > CONFIG.maxCorners) continue;
+                    
+                    queue.push({ row: newRow, col: newCol, corners: newCorners, direction: newDir });
+                }
+            }
+            
+            return false;
+        }
+
+        function renderBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            board.style.gridTemplateColumns = `repeat(${gameState.cols}, 1fr)`;
+            
+            for (let row = 0; row < gameState.rows; row++) {
+                for (let col = 0; col < gameState.cols; col++) {
+                    const block = gameState.blocks.find(b => b.row === row && b.col === col);
+                    const cell = document.createElement('div');
+                    cell.className = 'block';
+                    
+                    if (block && block.visible) {
+                        cell.textContent = block.content;
+                        cell.classList.add(`color-${block.color}`);
+                        cell.dataset.id = block.id;
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        cell.addEventListener('click', () => handleBlockClick(block));
+                    } else {
+                        cell.classList.add('empty');
+                    }
+                    
+                    board.appendChild(cell);
+                }
+            }
+            
+            updateDisplay();
+        }
+
+        function handleBlockClick(block) {
+            if (gameState.isGameOver || !block.visible) return;
+            
+            playSound('click');
+            
+            if (gameState.selectedBlock === null) {
+                // 第一次选择
+                gameState.selectedBlock = block;
+                highlightBlock(block);
+            } else if (gameState.selectedBlock.id === block.id && gameState.selectedBlock.row === block.row && gameState.selectedBlock.col === block.col) {
+                // 取消选择
+                gameState.selectedBlock = null;
+                renderBoard();
+            } else {
+                // 第二次选择
+                if (gameState.selectedBlock.pairId === block.pairId && canConnect(gameState.selectedBlock, block)) {
+                    // 匹配成功
+                    matchBlocks(gameState.selectedBlock, block);
+                } else {
+                    // 匹配失败
+                    playSound('error');
+                    gameState.selectedBlock = null;
+                    renderBoard();
+                }
+            }
+        }
+
+        function highlightBlock(block) {
+            const cells = document.querySelectorAll('.block');
+            cells.forEach(cell => {
+                cell.classList.remove('selected');
+                if (cell.dataset.row == block.row && cell.dataset.col == block.col) {
+                    cell.classList.add('selected');
+                }
+            });
+        }
+
+        function matchBlocks(block1, block2) {
+            playSound('match');
+            
+            // 标记为不可见
+            block1.visible = false;
+            block2.visible = false;
+            gameState.selectedBlock = null;
+            
+            // 增加分数
+            gameState.score += CONFIG.baseScore * gameState.level;
+            
+            // 显示知识卡片（此时暂停计时）
+            showKnowledgeCard(block1.info);
+            
+            // 检查游戏状态
+            const remaining = gameState.blocks.filter(b => b.visible).length;
+            
+            if (remaining === 0) {
+                // 胜利
+                stopTimer();
+                setTimeout(() => {
+                    playSound('win');
+                    celebrateWin();
+                    showGameOver(true);
+                }, 500);
+            } else if (!hasValidMoves()) {
+                // 失败
+                stopTimer();
+                setTimeout(() => showGameOver(false, '无路可走，游戏失败！'), 500);
+            }
+            
+            renderBoard();
+        }
+
+        function showKnowledgeCard(info) {
+            // 暂停计时（知识卡片弹出时不计时）
+            pauseTimer();
+            
+            const card = document.getElementById('knowledgeCard');
+            
+            if (gameState.mode === 1 || gameState.mode === 2) {
+                card.innerHTML = `
+                    <h3>${info.title || info.full}</h3>
+                    <div class="author">${info.author ? '作者：' + info.author : ''}</div>
+                    <div class="full-text">${info.full}</div>
+                `;
+            } else {
+                card.innerHTML = `
+                    <h3>${info.sentence}</h3>
+                    <div class="author">意象：${info.imagery}</div>
+                    <div class="full-text">${info.full}</div>
+                `;
+            }
+            
+            document.getElementById('knowledgeModal').classList.add('show');
+        }
+
+        function showGameOver(isWin, customMessage) {
+            gameState.isGameOver = true;
+            stopTimer();
+
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+            const retryBtn = document.getElementById('retryBtn');
+            const nextBtn = document.getElementById('nextLevelBtn');
+
+            document.getElementById('finalScore').textContent = gameState.score;
+
+            // 更新最高分
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                localStorage.setItem('poetryLinkHighScore', gameState.highScore);
+            }
+
+            // 更新玩家统计数据
+            playerData.totalGames++;
+            if (isWin) {
+                playerData.wins++;
+                playerData.totalTime += CONFIG.maxTime - gameState.timeRemaining;
+            }
+            savePlayerData();
+
+            updateDisplay();
+            
+            if (isWin) {
+                title.textContent = '恭喜通关！';
+                message.textContent = `第 ${gameState.level} 关完成！`;
+                retryBtn.style.display = 'none';
+                nextBtn.style.display = 'inline-block';
+            } else {
+                title.textContent = '游戏失败';
+                message.textContent = customMessage || '无路可走，请重新挑战！';
+                retryBtn.style.display = 'inline-block';
+                nextBtn.style.display = 'none';
+            }
+            
+            document.getElementById('gameOverModal').classList.add('show');
+        }
+
+        function useHint() {
+            if (gameState.isGameOver) return;
+            
+            const visibleBlocks = gameState.blocks.filter(b => b.visible);
+            
+            for (let i = 0; i < visibleBlocks.length; i++) {
+                for (let j = i + 1; j < visibleBlocks.length; j++) {
+                    if (visibleBlocks[i].pairId === visibleBlocks[j].pairId) {
+                        if (canConnect(visibleBlocks[i], visibleBlocks[j])) {
+                            // 高亮提示
+                            const cells = document.querySelectorAll('.block');
+                            cells.forEach(cell => {
+                                if ((cell.dataset.row == visibleBlocks[i].row && cell.dataset.col == visibleBlocks[i].col) ||
+                                    (cell.dataset.row == visibleBlocks[j].row && cell.dataset.col == visibleBlocks[j].col)) {
+                                    cell.classList.add('hint-glow');
+                                    setTimeout(() => cell.classList.remove('hint-glow'), 2000);
+                                }
+                            });
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        function startNewGame(resetScore = true) {
+            // 隐藏开始遮罩
+            document.getElementById('startOverlay').style.display = 'none';
+
+            if (resetScore) {
+                gameState.score = 0;
+                gameState.level = 1;
+            }
+
+            gameState.isGameOver = false;
+            gameState.selectedBlock = null;
+
+            generateBlocks();
+            renderBoard();
+            startTimer(); // 启动倒计时
+        }
+
+        function updateDisplay() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('personalHigh').textContent = gameState.highScore;
+            document.getElementById('remaining').textContent = gameState.blocks.filter(b => b.visible).length;
+        }
+
+        // ==================== 事件绑定 ====================
+        function setupEvents() {
+            // 新游戏
+            document.getElementById('newGameBtn').addEventListener('click', () => startNewGame());
+            
+            // 提示
+            document.getElementById('hintBtn').addEventListener('click', useHint);
+            
+            // 开始游戏（首次访问关闭规则弹窗后）
+            document.getElementById('startGameBtn').addEventListener('click', () => {
+                document.getElementById('rulesModal').classList.remove('show');
+                startBGM();
+                startNewGame(); // 开始计时
+            });
+
+            // 游戏板开始按钮
+            document.getElementById('startGameBtn2').addEventListener('click', doStartGame);
+            
+            // 继续游戏
+            document.getElementById('continueBtn').addEventListener('click', () => {
+                document.getElementById('knowledgeModal').classList.remove('show');
+                resumeTimer(); // 继续计时
+            });
+            
+            // 重新挑战
+            document.getElementById('retryBtn').addEventListener('click', () => {
+                document.getElementById('gameOverModal').classList.remove('show');
+                startNewGame(false);
+            });
+            
+            // 下一关
+            document.getElementById('nextLevelBtn').addEventListener('click', () => {
+                document.getElementById('gameOverModal').classList.remove('show');
+                gameState.level++;
+                startNewGame(false);
+            });
+            
+            // 模式选择
+            document.getElementById('mode1').addEventListener('click', () => {
+                stopTimer();
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('mode1').classList.add('active');
+                gameState.mode = 1;
+                gameState.score = 0;
+                gameState.level = 1;
+                gameState.selectedBlock = null;
+                gameState.isGameOver = false;
+                generateBlocks();
+                renderBoard();
+                updateDisplay();
+                document.getElementById('startOverlay').style.display = 'flex';
+            });
+
+            document.getElementById('mode2').addEventListener('click', () => {
+                stopTimer();
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('mode2').classList.add('active');
+                gameState.mode = 2;
+                gameState.score = 0;
+                gameState.level = 1;
+                gameState.selectedBlock = null;
+                gameState.isGameOver = false;
+                generateBlocks();
+                renderBoard();
+                updateDisplay();
+                document.getElementById('startOverlay').style.display = 'flex';
+            });
+
+            document.getElementById('mode3').addEventListener('click', () => {
+                stopTimer();
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('mode3').classList.add('active');
+                gameState.mode = 3;
+                gameState.score = 0;
+                gameState.level = 1;
+                gameState.selectedBlock = null;
+                gameState.isGameOver = false;
+                generateBlocks();
+                renderBoard();
+                updateDisplay();
+                document.getElementById('startOverlay').style.display = 'flex';
+            });
+
+            // 主题选择
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    stopTimer();
+                    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    gameState.theme = btn.dataset.theme;
+                    gameState.score = 0;
+                    gameState.level = 1;
+                    gameState.selectedBlock = null;
+                    gameState.isGameOver = false;
+                    generateBlocks();
+                    renderBoard();
+                    updateDisplay();
+                    document.getElementById('startOverlay').style.display = 'flex';
+                });
+            });
+            
+            // 音效控制
+            document.getElementById('bgmBtn').addEventListener('click', toggleBGM);
+            document.getElementById('sfxBtn').addEventListener('click', toggleSFX);
+
+            // 自定义题库按钮
+            document.getElementById('customBtn').addEventListener('click', () => {
+                document.getElementById('customModal').classList.add('show');
+                loadCustomPoetry();
+            });
+
+            // 自定义题库模式切换
+            document.getElementById('customModeSelect').addEventListener('change', (e) => {
+                switchCustomMode(parseInt(e.target.value));
+            });
+
+            // 添加自定义题目
+            document.getElementById('addCustomBtn').addEventListener('click', addCustomPoetry);
+
+            // 清空自定义题库
+            document.getElementById('clearCustomBtn').addEventListener('click', clearCustomPoetry);
+
+            // 关闭自定义弹窗
+            document.getElementById('closeCustomBtn').addEventListener('click', () => {
+                document.getElementById('customModal').classList.remove('show');
+            });
+
+            // 开始自定义游戏
+            document.getElementById('startCustomGame').addEventListener('click', () => {
+                const mode = parseInt(document.getElementById('customModeSelect').value);
+                const customData = mode === 1 ? CUSTOM_POETRY.mode1 :
+                                   mode === 2 ? CUSTOM_POETRY.mode2 :
+                                   CUSTOM_POETRY.mode3;
+
+                if (customData.length < 1) {
+                    alert('请至少添加一对题目！');
+                    return;
+                }
+
+                // 设置游戏模式
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('mode' + mode).classList.add('active');
+                gameState.mode = mode;
+
+                // 设置自定义主题
+                document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('customBtn').classList.add('active');
+                gameState.theme = 'custom';
+
+                document.getElementById('customModal').classList.remove('show');
+                startNewGame();
+            });
+
+            // 主页按钮
+            document.getElementById('profileBtn').addEventListener('click', () => {
+                updateProfileDisplay();
+                document.getElementById('profileModal').classList.add('show');
+            });
+
+            // 保存昵称
+            document.getElementById('saveNameBtn').addEventListener('click', () => {
+                const name = document.getElementById('profileName').value.trim();
+                if (name) {
+                    playerData.name = name;
+                    savePlayerData();
+                    alert('昵称保存成功！');
+                }
+            });
+
+            // 关闭主页弹窗
+            document.getElementById('closeProfileBtn').addEventListener('click', () => {
+                document.getElementById('profileModal').classList.remove('show');
+            });
+
+            // 班级按钮
+            document.getElementById('classBtn').addEventListener('click', () => {
+                loadClassData();
+                document.getElementById('classModal').classList.add('show');
+            });
+
+            // 生成班级号
+            document.getElementById('generateCodeBtn').addEventListener('click', () => {
+                document.getElementById('newClassCode').value = generateClassCode();
+            });
+
+            // 创建班级
+            document.getElementById('createClassBtn').addEventListener('click', createClass);
+
+            // 加入班级
+            document.getElementById('joinClassBtn').addEventListener('click', joinClass);
+
+            // 退出班级
+            document.getElementById('leaveClassBtn').addEventListener('click', () => {
+                if (confirm('确定要退出班级吗？')) {
+                    classData = { className: '', classCode: '', members: [] };
+                    saveClassData();
+                    updateMembersList();
+                    alert('已退出班级');
+                }
+            });
+
+            // 关闭班级弹窗
+            document.getElementById('closeClassBtn').addEventListener('click', () => {
+                document.getElementById('classModal').classList.remove('show');
+            });
+
+            // 取消PK
+            document.getElementById('cancelPkBtn').addEventListener('click', () => {
+                document.getElementById('pkModal').classList.remove('show');
+            });
+
+            // 关闭PK结果
+            document.getElementById('closePkBtn').addEventListener('click', () => {
+                document.getElementById('pkModal').classList.remove('show');
+            });
+
+            // 窗口大小变化
+            window.addEventListener('resize', () => {
+                generateBlocks();
+                renderBoard();
+            });
+        }
+
+        // ==================== 初始化 ====================
+        function init() {
+            // 加载存储的数据
+            gameState.highScore = parseInt(localStorage.getItem('poetryLinkHighScore')) || 0;
+
+            // 加载自定义题库
+            loadCustomPoetry();
+
+            // 加载玩家数据
+            loadPlayerData();
+
+            // 加载班级数据
+            loadClassData();
+
+            // 生成游戏板（不开始计时）
+            generateBlocks();
+            renderBoard();
+            updateDisplay();
+
+            // 显示开始遮罩
+            document.getElementById('startOverlay').style.display = 'flex';
+
+            // 检查首次访问
+            const visited = localStorage.getItem('poetryLinkVisited');
+            if (!visited) {
+                document.getElementById('rulesModal').classList.add('show');
+                localStorage.setItem('poetryLinkVisited', 'true');
+            } else {
+                startBGM();
+            }
+
+            setupEvents();
+        }
+
+        // 开始游戏（点击开始按钮时调用）
+        function doStartGame() {
+            document.getElementById('startOverlay').style.display = 'none';
+            startNewGame();
+        }
+
+        // 启动游戏
+        init();
+    </script>
+</body>
+</html>
